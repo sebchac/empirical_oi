@@ -1,0 +1,569 @@
+\documentclass[12pt, a4paper]{article}
+
+% ---------------------------------------------------------------
+% Paquetes
+% ---------------------------------------------------------------
+\usepackage{fontspec}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{natbib}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm, top=3cm, bottom=3cm}
+
+% ---------------------------------------------------------------
+% Colores y cajas
+% ---------------------------------------------------------------
+\definecolor{blpblue}{RGB}{31, 78, 121}
+\definecolor{blplightblue}{RGB}{214, 231, 247}
+\definecolor{blpgray}{RGB}{245, 245, 245}
+\definecolor{blpgreen}{RGB}{0, 100, 0}
+\definecolor{codegray}{RGB}{248, 248, 248}
+\definecolor{codeframe}{RGB}{200, 200, 200}
+
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{tipbox}[1][]{
+  colback=blplightblue, colframe=blpblue,
+  fonttitle=\bfseries\color{white},
+  title=#1,
+  coltitle=white,
+  boxrule=0.8pt,
+  arc=4pt,
+  breakable
+}
+
+\newtcolorbox{alertbox}[1][]{
+  colback=yellow!10, colframe=orange!80!black,
+  fonttitle=\bfseries,
+  title=#1,
+  boxrule=0.8pt,
+  arc=4pt,
+  breakable
+}
+
+\newtcolorbox{defbox}[1][]{
+  colback=blpgray, colframe=blpblue!60,
+  fonttitle=\bfseries\color{blpblue},
+  title=#1,
+  boxrule=0.8pt,
+  arc=4pt,
+  breakable
+}
+
+% ---------------------------------------------------------------
+% Listings (código Python)
+% ---------------------------------------------------------------
+\lstset{
+  language=Python,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blpblue}\bfseries,
+  stringstyle=\color{blpgreen},
+  commentstyle=\color{gray}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=6pt,
+  frame=single,
+  rulecolor=\color{codeframe},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  captionpos=b,
+  morekeywords={pyblp, pd, np}
+}
+
+% ---------------------------------------------------------------
+% Encabezado y pie de página
+% ---------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{blpblue}\textbf{Magíster en Análisis Económico}}
+\fancyhead[R]{\small\color{blpblue}Organización Industrial Empírica}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% ---------------------------------------------------------------
+% Estilos de sección
+% ---------------------------------------------------------------
+\titleformat{\section}
+  {\large\bfseries\color{blpblue}}
+  {\thesection.}{0.5em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{blpblue!80}}
+  {\thesubsection.}{0.5em}{}
+
+% ---------------------------------------------------------------
+% Comandos útiles
+% ---------------------------------------------------------------
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bsigma}{\boldsymbol{\Sigma}}
+\newcommand{\bxi}{\boldsymbol{\xi}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\calM}{\mathcal{M}}
+
+% ---------------------------------------------------------------
+% DOCUMENTO
+% ---------------------------------------------------------------
+\begin{document}
+
+% Título
+\begin{center}
+  {\LARGE\bfseries\color{blpblue} Estimación de Demanda BLP}\\[0.4em]
+  {\large Clase de Reforzamiento --- \texttt{pyblp}}\\[0.3em]
+  {\normalsize Organización Industrial Empírica $\cdot$ Magíster en Análisis Económico}\\[0.3em]
+  {\small\color{gray} Basado en Berry, Levinsohn \& Pakes (1995) y \texttt{pyblp} v1.x (Conlon \& Gortmaker, 2020)}
+\end{center}
+
+\vspace{0.3em}
+\hrule height 1.5pt
+\vspace{0.5em}
+
+{\small\textbf{Objetivo:} Este documento sirve de apoyo para la clase de reforzamiento sobre estimación de demanda con el modelo de coeficientes aleatorios (BLP). Se presenta el marco teórico de forma concisa, la lógica de identificación y estimación, y tips prácticos para implementar el modelo con \texttt{pyblp} en Python.}
+
+\vspace{0.5em}
+
+\tableofcontents
+\newpage
+
+% ===============================================================
+\section{El Modelo BLP: Fundamentos Teóricos}
+% ===============================================================
+
+\subsection{Configuración del mercado}
+
+Consideramos un mercado con $J$ productos diferenciados y un \emph{outside good} (bien exterior, $j=0$). Hay $T$ mercados (e.g., ciudades $\times$ períodos). Cada consumidor $i$ elige el producto que maximiza su utilidad indirecta:
+
+\begin{defbox}[Utilidad indirecta del consumidor $i$ por el producto $j$ en el mercado $t$]
+\begin{equation}
+  u_{ijt} = \underbrace{\alpha_i p_{jt}}_{\text{precio}} + \underbrace{x_{jt}\beta_i}_{\text{características}} + \underbrace{\xi_{jt}}_{\text{calidad no obs.}} + \varepsilon_{ijt}
+  \label{eq:utility}
+\end{equation}
+\end{defbox}
+
+donde:
+\begin{itemize}[itemsep=2pt]
+  \item $p_{jt}$: precio del producto $j$ en el mercado $t$.
+  \item $x_{jt}$: vector de características observables ($K_2$ de ellas entran con coeficientes aleatorios, $K_1$ entran de forma lineal en $\delta$).
+  \item $\xi_{jt}$: atributo no observable que también valoran los consumidores (absorbe calidad, marca, etc.).
+  \item $\varepsilon_{ijt}$: choque de gusto i.i.d., distribuido Valor Extremo Tipo I.
+\end{itemize}
+
+\subsection{Coeficientes aleatorios}
+
+La clave del modelo BLP es que los coeficientes varían entre consumidores, capturando \emph{heterogeneidad en preferencias}:
+
+\begin{equation}
+  \begin{pmatrix} \alpha_i \\ \beta_i \end{pmatrix} = \begin{pmatrix} \bar{\alpha} \\ \bar{\beta} \end{pmatrix} + \Pi d_i + \Sigma \nu_i
+  \label{eq:rc}
+\end{equation}
+
+\begin{itemize}[itemsep=2pt]
+  \item $\bar{\alpha}, \bar{\beta}$: coeficientes medios de la población (\emph{parámetros lineales} $\theta_1$).
+  \item $d_i$: vector de características demográficas del consumidor $i$ (ingreso, edad, etc.).
+  \item $\nu_i \sim \mathcal{N}(0, I)$: shocks de gusto inobservables (distribución normal estándar).
+  \item $\Pi$: matriz de interacciones demográficas (\emph{parámetros no lineales}).
+  \item $\Sigma$: matriz triangular inferior de escala de la heterogeneidad no observada (\emph{parámetros no lineales}).
+\end{itemize}
+
+\begin{alertbox}[Intuición clave]
+Si $\Sigma = 0$ y $\Pi = 0$ recuperamos el Logit Multinomial simple (MNL). El BLP generaliza el MNL al permitir que la \emph{sustitución} sea más realista: productos con características similares compiten más entre sí.
+\end{alertbox}
+
+\subsection{Utilidad media y descomposición}
+
+Es conveniente descomponer la utilidad en una parte \textbf{media} (igual para todos) y una parte \textbf{individual}:
+
+\begin{equation}
+  u_{ijt} = \underbrace{\delta_{jt}(\theta)}_{\text{utilidad media}} + \underbrace{\mu_{ijt}(\theta, d_i, \nu_i)}_{\text{desviación individual}} + \varepsilon_{ijt}
+  \label{eq:decomp}
+\end{equation}
+
+donde $\delta_{jt} \equiv x_{jt}\bar{\beta} + \bar{\alpha}p_{jt} + \xi_{jt}$ es la \textbf{utilidad media} del producto $j$ (o \emph{mean utility}).
+
+% ===============================================================
+\section{Participaciones de Mercado y Contracción}
+% ===============================================================
+
+\subsection{Shares predichos}
+
+Dado que $\varepsilon_{ijt}$ es i.i.d. Valor Extremo Tipo I, la probabilidad de elección del individuo $i$ es:
+
+\begin{equation}
+  s_{ijt}(\delta, \theta) = \frac{\exp(\delta_{jt} + \mu_{ijt})}{\sum_{k=0}^{J_t} \exp(\delta_{kt} + \mu_{ikt})}
+  \label{eq:choice_prob}
+\end{equation}
+
+Los shares de mercado predichos se obtienen integrando sobre la distribución de consumidores:
+
+\begin{equation}
+  s_{jt}(\delta, \theta) = \int s_{ijt}(\delta, \theta) \, dP(d, \nu) \approx \frac{1}{I} \sum_{i=1}^{I} s_{ijt}(\delta, \theta)
+  \label{eq:shares}
+\end{equation}
+
+Esta integral no tiene forma cerrada $\Rightarrow$ se aproxima mediante \textbf{integración numérica} (Monte Carlo, cuadraturas de producto, etc.).
+
+\subsection{El operador de contracción (Berry 1994)}
+
+Para estimar el modelo, necesitamos $\delta_{jt}$ que iguale los shares predichos a los observados $S_{jt}$. Berry (1994) muestra que existe un \textbf{único} vector $\delta$ que satisface $s(\delta, \theta) = S$ y propone el siguiente operador de punto fijo:
+
+\begin{defbox}[Contracción de Berry]
+\begin{equation}
+  \delta^{(r+1)} = \delta^{(r)} + \ln S - \ln s(\delta^{(r)}, \theta)
+  \label{eq:contraction}
+\end{equation}
+Se itera hasta convergencia: $\|\delta^{(r+1)} - \delta^{(r)}\| < \epsilon_{\text{inner}}$.
+\end{defbox}
+
+\texttt{pyblp} implementa también el \textbf{método de Newton} para la solución del sistema interno, que converge más rápido que la contracción simple (opción por defecto en versiones recientes).
+
+% ===============================================================
+\section{Identificación y Estimación GMM}
+% ===============================================================
+
+\subsection{La ecuación estructural y las restricciones de momentos}
+
+Una vez obtenido $\delta(\theta)$, recuperamos la perturbación estructural:
+
+\begin{equation}
+  \xi_{jt}(\theta) = \delta_{jt}(\theta) - x_{jt}\bar{\beta} - \bar{\alpha}p_{jt}
+  \label{eq:xi}
+\end{equation}
+
+El supuesto de identificación central es: $\E[\xi_{jt} \cdot z_{jt}] = 0$, donde $z_{jt}$ son \textbf{instrumentos} válidos.
+
+\subsection{Estimador GMM de dos etapas}
+
+La función objetivo GMM es:
+
+\begin{equation}
+  \hat{\theta} = \arg\min_{\theta} \, g(\theta)' W g(\theta), \quad g(\theta) = \frac{1}{JT}\sum_{j,t} z_{jt} \cdot \xi_{jt}(\theta)
+  \label{eq:gmm}
+\end{equation}
+
+donde $W$ es una matriz de pesos. El estimador eficiente usa $W = (Z'\hat{\Omega}Z)^{-1}$ con $\hat{\Omega} = \E[\xi\xi'|Z]$ (dos etapas o iterado). En \texttt{pyblp}, el parámetro \texttt{W\_type} controla esto.
+
+\subsection{Separación de parámetros lineales y no lineales}
+
+El algoritmo BLP opera en dos niveles (\emph{nested optimization}):
+
+\begin{enumerate}[itemsep=3pt]
+  \item \textbf{Loop externo} (sobre $\theta_2 = \{\Pi, \Sigma\}$, parámetros no lineales): el optimizador minimiza la función objetivo GMM.
+  \item \textbf{Loop interno} (sobre $\delta$ dado $\theta_2$): se resuelve la contracción de Berry.
+  \item \textbf{Parámetros lineales} ($\theta_1 = \{\bar{\alpha}, \bar{\beta}\}$): se obtienen analíticamente por mínimos cuadrados instrumentales (eliminación concentrada).
+\end{enumerate}
+
+\begin{tipbox}[Tip: ¿Qué parámetros son ``no lineales''?]
+Los no lineales son los que aparecen en $\mu_{ijt}$, es decir, los que \textbf{interactúan con la heterogeneidad} ($\Sigma$, $\Pi$). Los coeficientes medios $\bar{\beta}$ y $\bar{\alpha}$ son lineales y no requieren optimización numérica directa.
+\end{tipbox}
+
+% ===============================================================
+\section{Instrumentos para Identificación}
+% ===============================================================
+
+\subsection{¿Por qué necesitamos instrumentos?}
+
+El precio $p_{jt}$ es endógeno: las empresas fijan precios conociendo $\xi_{jt}$, por lo que $\text{Cov}(p_{jt}, \xi_{jt}) \neq 0$. Los instrumentos deben ser:
+\begin{enumerate}[itemsep=2pt]
+  \item \textbf{Relevantes}: correlacionados con el precio (o las variables endógenas).
+  \item \textbf{Exógenos}: incorrelacionados con $\xi_{jt}$.
+\end{enumerate}
+
+\subsection{Tipos comunes de instrumentos}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Tipo} & \textbf{Descripción} & \textbf{Justificación} \\
+\midrule
+BLP (1995) & Suma de características de rivales en el mercado & Costo marginal varía con competidores \\
+Hausman & Precio del mismo producto en otros mercados & Shocks de costo comunes, no de demanda \\
+Costo & Variables de costo observadas (salarios, insumos) & Directamente vinculadas al precio \\
+``Differentiation IVs'' & Distancia en el espacio de características & Relevante para los coef. aleatorios \\
+\bottomrule
+\end{tabular}
+\caption{Instrumentos habituales en modelos BLP}
+\end{table}
+
+\begin{tipbox}[Tip: Instrumentos para los parámetros no lineales]
+Para identificar $\Sigma$ (la dispersión de los coeficientes aleatorios) se necesitan instrumentos que varíen la \emph{distribución} de las alternativas, no solo el precio medio. Los ``differentiation IVs'' de Gandhi \& Houde (2023) son una buena opción en \texttt{pyblp}: se construyen automáticamente con \texttt{pyblp.build\_differentiation\_instruments()}.
+\end{tipbox}
+
+% ===============================================================
+\section{Elasticidades e Implicaciones}
+% ===============================================================
+
+Con el modelo estimado, las elasticidades precio se calculan como:
+
+\begin{align}
+  \varepsilon_{jkt} &= \frac{\partial s_{jt}}{\partial p_{kt}} \cdot \frac{p_{kt}}{s_{jt}} \\[4pt]
+  \frac{\partial s_{jt}}{\partial p_{kt}} &=
+  \begin{cases}
+    -\frac{1}{M_t} \int \alpha_i \, s_{ijt}(1-s_{ijt})\,dP & \text{si } j = k \\[4pt]
+    +\frac{1}{M_t} \int \alpha_i \, s_{ijt} s_{ikt}\,dP & \text{si } j \neq k
+  \end{cases}
+  \label{eq:elasticities}
+\end{align}
+
+A diferencia del Logit simple, aquí la elasticidad cruzada entre $j$ y $k$ \textbf{depende de las características} de ambos productos, reflejando patrones de sustitución realistas.
+
+% ===============================================================
+\section{Implementación en \texttt{pyblp}: Guía Práctica}
+% ===============================================================
+
+\subsection{Instalación y versión}
+
+\begin{lstlisting}[caption={Instalación y verificación}]
+pip install pyblp
+
+import pyblp
+import numpy as np
+import pandas as pd
+
+print(pyblp.__version__)   # Verificar version (>= 1.0 recomendada)
+pyblp.options.verbose = True  # Ver progreso de la estimacion
+pyblp.options.digits = 2      # Decimales en la salida
+\end{lstlisting}
+
+\subsection{Estructura de datos requerida}
+
+\texttt{pyblp} requiere que los datos estén en un DataFrame con columnas específicas:
+
+\begin{table}[h!]
+\centering\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\texttt{market\_ids} & str/int & Identificador de mercado \\
+\texttt{product\_ids} & str/int & Identificador de producto \\
+\texttt{shares} & float & Participación de mercado \\
+\texttt{prices} & float & Precio del producto \\
+\texttt{demand\_instruments*} & float & Instrumentos de demanda (0, 1, 2...) \\
+\textit{otras características} & float & Variables para las fórmulas \\
+\bottomrule
+\end{tabular}
+\caption{Columnas requeridas en \texttt{product\_data}}
+\end{table}
+
+\begin{tipbox}[Tip: Convención de instrumentos]
+Los instrumentos de demanda deben llamarse \texttt{demand\_instruments0}, \texttt{demand\_instruments1}, etc. Del mismo modo, los de oferta se llaman \texttt{supply\_instruments0}, etc. \texttt{pyblp} los recoge automáticamente si siguen esta convención.
+\end{tipbox}
+
+\subsection{Formulaciones (\texttt{Formulation})}
+
+Las formulaciones especifican qué variables entran en cada componente del modelo usando sintaxis de tipo Patsy/R:
+
+\begin{lstlisting}[caption={Definición de formulaciones}]
+# X1: variables con coeficientes LINEALES (usualmente precio)
+# "0 +" elimina el intercepto; absorb='C(product_ids)' para EF de producto
+X1 = pyblp.Formulation('0 + prices', absorb='C(product_ids)')
+
+# X2: variables con coeficientes ALEATORIOS
+# Incluye intercepto (para la escala del outside good)
+X2 = pyblp.Formulation('1 + prices + sugar + mushy')
+
+product_formulations = (X1, X2)
+\end{lstlisting}
+
+\begin{alertbox}[¡Ojo con el intercepto!]
+El intercepto en $X_2$ da un coeficiente aleatorio sobre la constante, capturando heterogeneidad general en el nivel de utilidad. Si se omite, se pierde un parámetro de heterogeneidad importante.
+\end{alertbox}
+
+\subsection{Integración numérica (\texttt{Integration})}
+
+\begin{lstlisting}[caption={Métodos de integración}]
+# Monte Carlo: rapido pero ruidoso, util para explorar
+mc = pyblp.Integration('monte_carlo', size=50,
+                        specification_options={'seed': 42})
+
+# Cuadratura de producto (Gauss-Hermite): mas precisa, recomendada
+gh = pyblp.Integration('product', size=7)
+
+# Cuadratura sparse (Smolyak): eficiente en alta dimension
+sparse = pyblp.Integration('grid', size=5)
+\end{lstlisting}
+
+\begin{tipbox}[Tip: ¿Cuántos nodos usar?]
+Para resultados finales use integración por producto (\texttt{'product'}) con \texttt{size=7} o más nodos por dimensión. Para exploración inicial, Monte Carlo con \texttt{size=50}--\texttt{200} y semilla fija es más rápido. El error de Monte Carlo decrece como $O(1/\sqrt{I})$.
+\end{tipbox}
+
+\subsection{Configuración del Problema (\texttt{Problem})}
+
+\begin{lstlisting}[caption={Creación del objeto Problem}]
+problem = pyblp.Problem(
+    product_formulations = product_formulations,
+    product_data         = product_data,
+    agent_formulation    = agent_formulation,  # Si hay demograficos
+    agent_data           = agent_data,          # DataFrame de consumidores
+    integration          = integration          # Si NO hay agentes externos
+)
+print(problem)  # Resumen del problema: dimensiones, IVs, etc.
+\end{lstlisting}
+
+\subsection{Estimación (\texttt{problem.solve()})}
+
+\begin{lstlisting}[caption={Estimación con valores iniciales}]
+# Parametros iniciales para los no-lineales (Sigma, Pi)
+# Sigma: desviaciones estandar de los coef. aleatorios
+# Pi: interacciones con demograficos
+
+sigma_0 = np.diag([0.3, 0.0, 0.0, 0.0])  # Solo intercepto con RC
+pi_0 = None  # Sin demograficos
+
+results = problem.solve(
+    sigma         = sigma_0,
+    pi            = pi_0,
+    method        = '2s',       # GMM dos etapas ('1s', '2s', 'iterated')
+    optimization  = pyblp.Optimization('l-bfgs-b'),  # Optimizador
+    iteration     = pyblp.Iteration('squarem'),        # Contraccion interna
+)
+print(results)
+\end{lstlisting}
+
+\begin{tipbox}[Tip: Valores iniciales]
+Los valores iniciales de $\Sigma$ y $\Pi$ son cruciales. Empezar con ceros puede llevar a singularidades. Una estrategia práctica:
+\begin{enumerate}[itemsep=1pt]
+  \item Estimar primero el Logit simple (todos en cero) para obtener $\xi_{jt}$ iniciales.
+  \item Luego explorar una grilla de valores iniciales y quedarse con el mínimo global.
+\end{enumerate}
+\end{tipbox}
+
+\begin{alertbox}[Signo de sigma\_prices]
+El coeficiente de precio $\alpha_i = \bar{\alpha} + \sigma_\alpha \nu_i$ debe ser \textbf{negativo} en promedio. Si el valor inicial de $\sigma_\alpha$ es libre, el optimizador puede converger a óptimos locales con signo incorrecto. Fijar el signo con bounds o reparametrizar.
+\end{alertbox}
+
+\subsection{Post-estimación: elasticidades y markups}
+
+\begin{lstlisting}[caption={Post-estimación}]
+# Elasticidades precio propias y cruzadas (una por mercado)
+elasticities = results.compute_elasticities()
+
+# Diagonales = elasticidades propias
+own_elast = results.extract_diagonal(elasticities)
+print(f"Elasticidad propia media: {own_elast.mean():.3f}")
+
+# Markups bajo competencia de Nash-Bertrand
+costs = results.compute_costs()
+markups = results.compute_markups(costs=costs)
+
+# Indices de diversidad y poder de mercado
+hhi = results.compute_hhi()
+\end{lstlisting}
+
+% ===============================================================
+\section{Replicación Nevo (2000): Datos de Cereales}
+% ===============================================================
+
+\subsection{Descripción de los datos}
+
+El ejercicio canónico de \texttt{pyblp} replica a \citet{Nevo2000} con:
+\begin{itemize}[itemsep=2pt]
+  \item \textbf{24 marcas} de cereales listos para comer.
+  \item \textbf{94 ciudades} (mercados) y 4 trimestres $\rightarrow$ 94 mercados en la versión simplificada.
+  \item Variables de producto: precio, contenido de azúcar (\texttt{sugar}), si es esponjoso (\texttt{mushy}).
+  \item Datos demográficos: ingresos, edad, presencia de niños.
+  \item Instrumentos BLP y costos de entrada como IVs.
+\end{itemize}
+
+\subsection{Reproducción paso a paso}
+
+Ver el archivo \texttt{blp\_nevo\_ejemplo.py} adjunto para el código completo comentado. La estructura general es:
+
+\begin{enumerate}[itemsep=4pt]
+  \item \textbf{Cargar datos}: \texttt{pyblp.data.NEVO\_PRODUCTS\_LOCATION} y \texttt{NEVO\_AGENTS\_LOCATION}.
+  \item \textbf{Definir formulaciones}: $X_1$ con FE de producto, $X_2$ con intercepto, precio, azúcar y mushy.
+  \item \textbf{Configurar demograficos}: formulación de agentes con ingresos e indicadoras.
+  \item \textbf{Construir el Problema} con datos de agentes externos.
+  \item \textbf{Estimar} con valores iniciales de Nevo y GMM de dos etapas.
+  \item \textbf{Post-estimar}: elasticidades, costos, markups.
+\end{enumerate}
+
+% ===============================================================
+\section{Errores Comunes y Tips de Depuración}
+% ===============================================================
+
+\begin{tipbox}[Tips de depuración rápida]
+\begin{enumerate}[itemsep=4pt]
+  \item \textbf{Verificar shares}: $\sum_j s_{jt} < 1$ para todo $t$, y $s_{0t} = 1 - \sum_j s_{jt} > 0$. Si no, revisar la construcción de los datos.
+
+  \item \textbf{Activar verbose}: \texttt{pyblp.options.verbose = True} para ver el progreso de la optimización. Si la función objetivo no disminuye, los valores iniciales son malos.
+
+  \item \textbf{Revisar el \texttt{print(problem)}}: muestra el número de IVs, parámetros y dimensiones. Un número insuficiente de IVs (menos que parámetros) causará problemas de identificación.
+
+  \item \textbf{Matriz de pesos singular}: ocurre si los instrumentos son colineales. Revisar si hay variables redundantes en \texttt{demand\_instruments}.
+
+  \item \textbf{Convergencia del loop interno}: si la contracción no converge, usar \texttt{Iteration('squarem')} o Newton. Verificar con \texttt{results.contraction\_evaluations}.
+
+  \item \textbf{Gradiente numérico vs. analítico}: \texttt{pyblp} calcula gradientes analíticos por defecto. Si se usan formulaciones complejas con absorción, revisar que el gradiente sea correcto con \texttt{pyblp.options.finite\_differences}.
+\end{enumerate}
+\end{tipbox}
+
+\begin{alertbox}[Mínimos locales]
+El problema de optimización BLP es no convexo. Se recomienda:
+\begin{itemize}[itemsep=1pt]
+  \item Probar múltiples puntos de partida (grilla).
+  \item Usar \texttt{pyblp.ProblemResults.to\_pickle()} para guardar resultados intermedios.
+  \item Comparar con estimaciones logit simples: si los parámetros RC son muy distintos del caso sin heterogeneidad, verificar la identificación.
+\end{itemize}
+\end{alertbox}
+
+% ===============================================================
+\section{Referencias}
+% ===============================================================
+
+\begin{thebibliography}{9}
+
+\bibitem[Berry et al. (1995)]{BLP1995}
+Berry, S., Levinsohn, J., \& Pakes, A. (1995).
+\emph{Automobile Prices in Market Equilibrium}.
+\textit{Econometrica}, 63(4), 841--890.
+
+\bibitem[Berry(1994)]{Berry1994}
+Berry, S. (1994).
+\emph{Estimating Discrete-Choice Models of Product Differentiation}.
+\textit{RAND Journal of Economics}, 25(2), 242--262.
+
+\bibitem[Nevo(2000)]{Nevo2000}
+Nevo, A. (2000).
+\emph{A Practitioner's Guide to Estimation of Random-Coefficients Logit Models of Demand}.
+\textit{Journal of Economics \& Management Strategy}, 9(4), 513--548.
+
+\bibitem[Conlon \& Gortmaker (2020)]{ConlonGortmaker2020}
+Conlon, C., \& Gortmaker, J. (2020).
+\emph{Best Practices for Differentiated Products Demand Estimation with pyblp}.
+\textit{RAND Journal of Economics}, 51(4), 1108--1161.
+
+\bibitem[Gandhi \& Houde (2023)]{GandhiHoude2023}
+Gandhi, A., \& Houde, J.-F. (2023).
+\emph{Measuring Substitution Patterns in Differentiated-Products Industries}.
+\textit{Econometrica}, forthcoming.
+
+\end{thebibliography}
+
+\vspace{2em}
+\noindent\rule{\textwidth}{0.4pt}\\
+{\small\color{gray} Documento preparado como material de apoyo para la clase de reforzamiento de estimación de demanda BLP. Para dudas sobre el código o la teoría, revisar la documentación oficial de \texttt{pyblp} en \url{https://pyblp.readthedocs.io}.}
+
+\end{document}
