@@ -1,0 +1,13 @@
+# Folders
+archive/
+2026_fall/01-homeworks/pbordon/hw1/submissions
+
+# Data files
+*.csv
+*.dta
+*.xlsx
+*.xls
+*.zip
+*.tar.gz
+*.7z
+*.log

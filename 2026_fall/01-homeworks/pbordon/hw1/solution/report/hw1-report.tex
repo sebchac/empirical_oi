@@ -1,0 +1,276 @@
+\documentclass[answers]{exam}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[table,xcdraw]{xcolor}
+
+\usepackage{footnote}
+\usepackage{booktabs}
+\makesavenoteenv{solution}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+    \hskip -\arraycolsep
+    \let\@ifnextchar\new@ifnextchar
+    \array{#1}}
+\makeatother
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{subfig}
+\usepackage{psfrag}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{bigstrut}
+\usepackage{color}
+	\definecolor{ceruleanblue}{rgb}{0.16, 0.32, 0.75}
+	\definecolor{coolblack}{rgb}{0.0, 0.18, 0.39}
+	\definecolor{darkgreen}{rgb}{0.0, 0.2, 0.13}
+\usepackage{multirow,hhline}
+\usepackage[linkcolor=blue,colorlinks=true]{hyperref}
+\def\mathrlap{\mathpalette\mathrlapinternal}
+\def\mathclap{\mathpalette\mathclapinternal}
+\def\mathllapinternal#1#2{\llap{$\mathsurround=0pt#1{#2}$}}
+\def\mathrlapinternal#1#2{\rlap{$\mathsurround=0pt#1{#2}$}}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{lipsum}
+\usepackage{mdframed}
+
+\renewcommand{\solutiontitle}{\noindent\textsf{\textbf{Respuesta}}\par\noindent}
+
+\pagestyle{headandfoot}
+\headrule
+
+%\firstpageheader{\scriptsize{\includegraphics[scale=0.05]{tarea1/images/logo.jpg}}}{} {\scriptsize{Universidad de Chile} \\ \scriptsize{Facultad de Economía y Negocios}\\ \scriptsize{Departamento de Economía}\\ \scriptsize{ }}
+%\runningheader{\scriptsize{\includegraphics[scale=0.05]{tarea1/images/logo.jpg}}}{\scriptsize Macroeconomía IV \\ \scriptsize{Otoño 2021}\\ \scriptsize{ }} {\scriptsize{Universidad de Chile} \\ \scriptsize{Facultad de Economía y Negocios}\\ \scriptsize{Departamento de Economía}\\ \scriptsize{ }}
+
+\footrule
+\footer{}{\scriptsize{P\'agina \thepage\ de \numpages}}{}
+\parindent = 0pt
+\renewcommand\partlabel{(\thepartno.)}
+\renewcommand\thesubpart{\roman{subpart}}
+
+
+\begin{document}
+
+\begin{center}
+
+\textbf{\large{Métodos Avanzados de Organización Industrial Empírica, Primavera 2026}} \\ \textbf{\large{Tarea 1: Estimación de Funciones de Producción}}
+
+\medskip
+
+\textbf{Profesores:} \textsc{Paola Bordón y José Manuel Paz y Miño}
+
+\textbf{Alumno}: \textsc{Sebastián Chacón}
+
+\end{center}
+\vspace{7mm}
+
+Las variables relevantes en \texttt{ChileAnalysis.dta} son:
+
+\begin{itemize}
+    \item \textit{va}: value added $=$ output$-$materiales$-$energia$-$servicios
+    \item \textit{routput}: cantidad producida (output, en términos reales)
+    \item \textit{age}: edad de la firma desde 1979
+    \item $K$: capital deflactado (en términos reales)
+    \item $M$: materiales (intermediate inputs)
+    \item $L$: Trabajo
+    \item $N$: energía deflactado (en términos reales)
+    \item $S$: servicios deflactado (en términos reales)
+    \item $v$: value added deflactado (en términos reales)
+    \item \textit{rinvest}: inversión deflactada (en términos reales)
+    \item \textit{cexit}: 1 si la firma salió del panel antes de 1996
+\end{itemize}
+
+Puede utilizar el software de su preferencia.
+
+\begin{questions}
+
+\question Cree las variables en términos de logaritmo natural, excepto por la variable binaria \textit{cexit}.
+
+\begin{solution}
+Se crean las siguientes variables en logaritmo natural:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Variable creada & Definición \\
+\midrule
+$q  = \ln(\mathit{routput})$ & Logaritmo del output real \\
+$k  = \ln(K)$               & Logaritmo del capital \\
+$m  = \ln(M)$               & Logaritmo de los materiales \\
+$l  = \ln(L)$               & Logaritmo del trabajo \\
+$re = \ln(N)$               & Logaritmo de la energía \\
+$rs = \ln(S)$               & Logaritmo de los servicios \\
+$v  = \ln(\mathit{rva})$    & Logaritmo del valor agregado real \\
+$ri = \ln(\mathit{rinvest})$& Logaritmo de la inversión real \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La variable \texttt{cexit} es binaria y no se transforma. Ver código: \texttt{code/hw1-solution.do} líneas 11--18.
+\end{solution}
+
+\question Estime los coeficientes de capital y trabajo de la función de producción con $\ln(\mathit{routput})$ como variable dependiente. Es decir, estime $\beta_l$ y $\beta_m$. Utilice la metodología propuesta por Olley \& Pakes, y la inversión como variable proxy. Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se estima la función de producción de output bruto mediante Olley \& Pakes (1996), usando la inversión ($ri = \ln(\mathit{rinvest})$) como proxy de la productividad no observada $\omega_{it}$. El capital ($k$) es la variable de estado y el trabajo ($l$) es la variable libre.
+
+\input{../bld/tab/op_inv_all.tex}
+
+Los coeficientes estimados son $\hat{\beta}_l \approx 0.693$ y $\hat{\beta}_k \approx 0.439$. El trabajo presenta mayor elasticidad que el capital, lo que es esperable dado que la industria manufacturera chilena es relativamente intensiva en trabajo. La suma de ambos coeficientes ($\approx 1.13$) sugiere retornos ligeramente crecientes a escala.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 30--32.
+\end{solution}
+
+\question Estime los coeficientes del inciso anterior para el sector textil, ($\mathit{ciiu\_3d} == 321$). Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se repite la estimación de Olley \& Pakes con inversión como proxy, restringida al sector textil ($\mathit{ciiu\_3d} = 321$).
+
+\input{../bld/tab/op_inv_textil.tex}
+
+Para el sector textil se obtiene $\hat{\beta}_l \approx 0.739$ y $\hat{\beta}_k \approx 0.342$. El coeficiente de trabajo es mayor que para la muestra completa, mientras que el de capital es menor, lo que sugiere que el sector textil es relativamente más intensivo en trabajo que el promedio de la industria.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 36--38.
+\end{solution}
+
+\question Estime los coeficientes de capital y trabajo de la función de producción con $\ln(\mathit{routput})$ como variable dependiente. Estime $\beta_l$ y $\beta_m$. Utilice la metodología propuesta por Olley \& Pakes y materiales como variable proxy. Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se estima nuevamente la función de producción de output bruto mediante Olley \& Pakes (1996), ahora usando los materiales ($m = \ln(M)$) como proxy de la productividad $\omega_{it}$.
+
+\input{../bld/tab/op_mat_all.tex}
+
+Los coeficientes estimados son $\hat{\beta}_l \approx 0.251$ y $\hat{\beta}_k \approx 0.291$. Comparados con los obtenidos usando inversión como proxy, ambos coeficientes son notoriamente menores. Esto se discute en la pregunta~6.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 45--50.
+\end{solution}
+
+\question Estime los coeficientes del inciso anterior para el sector textil, ($\mathit{ciiu\_3d} == 321$). Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se repite la estimación de Olley \& Pakes con materiales como proxy, restringida al sector textil ($\mathit{ciiu\_3d} = 321$).
+
+\input{../bld/tab/op_mat_textil.tex}
+
+Para el sector textil se obtiene $\hat{\beta}_l \approx 0.307$ y $\hat{\beta}_k \approx 0.223$. Al igual que en la muestra completa, los coeficientes son considerablemente menores que los obtenidos con inversión como proxy.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 54--59.
+\end{solution}
+
+\question Compare los resultados de los coeficientes usando inversión y materiales como proxy.
+
+\begin{solution}
+La siguiente tabla resume los coeficientes estimados por Olley \& Pakes según el proxy utilizado:
+
+\input{../bld/tab/comparacion_proxies.tex}
+
+Existen dos diferencias relevantes entre ambas estimaciones. Primero, las estimaciones usando la inversión como proxy presentan muchos valores faltantes (\textit{missing}), ya que numerosas firmas reportan inversión cero o negativa y quedan excluidas de la muestra (véase comentario en \texttt{hw1-solution.do} línea 63). Esto puede sesgar los resultados si las firmas con inversión positiva son sistemáticamente distintas. Segundo, el coeficiente de trabajo $\hat{\beta}_l$ es sustancialmente mayor cuando se usa inversión como proxy ($\approx 0.693$--$0.739$) respecto a cuando se usan materiales ($\approx 0.251$--$0.307$). Una explicación es que los materiales están más correlacionados con el trabajo que la inversión, lo que puede generar diferencias en la absorción de la productividad no observada $\omega_{it}$ en cada caso.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 30--63.
+\end{solution}
+
+\question Estime los coeficientes de capital $\beta_m$ y trabajo $\beta_l$ con $\ln(\mathit{routput})$ como variable dependiente a través del modelo de Levinshon \& Petrin, y materiales como variable proxy. Muestre una tabla con los resultados promedios. Prediga la productividad $\omega_t$.
+
+\begin{solution}
+Se estima la función de producción de output bruto mediante Levinsohn \& Petrin (2003), usando materiales ($m = \ln(M)$) como proxy de la productividad $\omega_{it}$ y la opción \texttt{revenue} para toda la muestra. La productividad se predice con \texttt{predict omega, omega}.
+
+\input{../bld/tab/lp_mat_all.tex}
+
+El modelo de Levinsohn \& Petrin resuelve el problema de selección de insumos al utilizar materiales como proxy continuo, evitando el problema de inversión cero que afecta a Olley \& Pakes. Los coeficientes estimados son los reportados en la tabla anterior. La productividad predicha $\hat{\omega}_{it}$ queda almacenada en la variable \texttt{omega}.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 69--70.
+\end{solution}
+
+\question Estime los coeficientes del inciso anterior para el sector textil, ($\mathit{ciiu\_3d} == 321$) y prediga la productividad $\omega_t$. Haga un gráfico para la evolución de la productividad.
+
+\begin{solution}
+Se repite la estimación de Levinsohn \& Petrin con materiales como proxy para el sector textil ($\mathit{ciiu\_3d} = 321$). La productividad se predice con \texttt{predict omega\_321, omega} y se construye una media ponderada por participación de mercado (\texttt{wtomega\_321}) y su crecimiento anual (\texttt{omega\_gro\_321}).
+
+\input{../bld/tab/lp_mat_textil.tex}
+
+La evolución de la productividad media ponderada y su tasa de crecimiento se muestran en las siguientes figuras:
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{../bld/fig/productividad_lp_textil.pdf}{%
+        \includegraphics[width=0.7\textwidth]{../bld/fig/productividad_lp_textil.pdf}%
+    }{%
+        \fbox{\parbox{0.65\textwidth}{\centering\vspace{1.2cm}%
+        \textit{[Figura generada por \texttt{hw1-solution.do} línea 95]}%
+        \vspace{1.2cm}}}%
+    }
+    \caption{Productividad media ponderada (LP) -- Sector Textil}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{../bld/fig/crecimiento_lp_textil.pdf}{%
+        \includegraphics[width=0.7\textwidth]{../bld/fig/crecimiento_lp_textil.pdf}%
+    }{%
+        \fbox{\parbox{0.65\textwidth}{\centering\vspace{1.2cm}%
+        \textit{[Figura generada por \texttt{hw1-solution.do} línea 96]}%
+        \vspace{1.2cm}}}%
+    }
+    \caption{Crecimiento de la productividad (LP) -- Sector Textil}
+\end{figure}
+
+Los gráficos muestran la trayectoria de $\hat{\omega}_t$ ponderada por participación de mercado a lo largo del período muestral. La tendencia permite identificar episodios de expansión o contracción de la productividad agregada del sector textil.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 74--96.
+\end{solution}
+
+\question Vuelva a estimar los coeficientes de capital y trabajo de la función de producción utilizando $\ln(va)$ (value added) como variable dependiente para el sector textil ($\mathit{ciiu\_3d} == 321$). Utilice la metodología propuesta por Olley \& Pakes, y materiales como variable proxy. Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se estima la función de producción de valor agregado ($v = \ln(\mathit{rva})$) mediante Olley \& Pakes (1996), con materiales ($m$) como proxy, para el sector textil.
+
+\input{../bld/tab/op_va_textil.tex}
+
+Los coeficientes estimados son $\hat{\beta}_l \approx 0.678$ y $\hat{\beta}_k \approx 0.245$. El coeficiente de trabajo es considerablemente mayor que el obtenido con output bruto como variable dependiente ($\approx 0.307$), lo cual es esperado: al usar valor agregado se eliminan los materiales del lado izquierdo de la ecuación, por lo que la variación restante se atribuye en mayor medida a capital y trabajo.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 105--109.
+\end{solution}
+
+\question Estime los coeficientes de capital y trabajo de la función de producción con $\ln(va)$ como variable dependiente para el sector textil ($\mathit{ciiu\_3d} == 321$) usando la metodología propuesta por Levinshon \& Petrin, y materiales como variable proxy. Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se estima la función de valor agregado para el sector textil mediante Levinsohn \& Petrin (2003), con materiales como proxy. Nótese que en esta especificación no se usa la opción \texttt{revenue} (a diferencia de la pregunta~7).
+
+\input{../bld/tab/lp_va_textil.tex}
+
+Los coeficientes son $\hat{\beta}_l \approx 0.678$ y $\hat{\beta}_k \approx 0.220$. Estos son muy similares a los obtenidos con Olley \& Pakes en valor agregado ($\hat{\beta}_l = 0.678$, $\hat{\beta}_k = 0.245$), lo que sugiere robustez del estimador de trabajo entre metodologías. La diferencia en el coeficiente de capital ($0.220$ vs.\ $0.245$) refleja las distintas estrategias de identificación de cada método.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 115--119.
+\end{solution}
+
+\question Estime nuevamente los coeficientes de capital y trabajo de la función de producción con $\ln(va)$ como variable dependiente para el sector textil ($\mathit{ciiu\_3d} == 321$) usando la metodología propuesta por Ackerberg, Caves \& Frazer, y materiales como variable proxy. Muestre una tabla con los resultados promedios.
+
+\begin{solution}
+Se estima la función de valor agregado para el sector textil mediante Ackerberg, Caves \& Frazer (2015). Se incluyen capital ($k$) y edad ($age$) como variables de estado, materiales ($m$) como proxy, trabajo ($l$) como variable libre, y se especifican las opciones \texttt{va} y \texttt{second}. La productividad se predice con \texttt{predict omega\_321\_acf, omega}.
+
+\input{../bld/tab/acf_va_textil.tex}
+
+ACF resuelve el problema de colinealidad entre la proxy y el trabajo que puede afectar a LP, al identificar $\beta_l$ en la segunda etapa. El coeficiente de edad (\textit{age}) captura el efecto de la antigüedad de la firma sobre la productividad dentro de la ecuación de producción.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 123--124.
+\end{solution}
+
+\question Compare los resultados de las estimaciones de los coeficientes usando como variables dependientes $\mathit{routput}$ y $va$ con los materiales como proxy (intermediate input).
+
+\begin{solution}
+La siguiente tabla resume todos los coeficientes estimados para el sector textil usando materiales como proxy:
+
+\input{../bld/tab/comparacion_depvar.tex}
+
+La comparación evidencia dos patrones claros. Primero, el coeficiente de trabajo $\hat{\beta}_l$ es notoriamente mayor en las especificaciones de valor agregado ($\approx 0.678$) que en las de output bruto ($\approx 0.307$). Esto ocurre porque en la especificación de valor agregado los materiales ya están sustraídos del lado izquierdo, por lo que toda la variación restante del output se atribuye a capital y trabajo. Segundo, los coeficientes de capital $\hat{\beta}_k$ también son mayores en valor agregado ($\approx 0.22$--$0.25$) versus output bruto ($\approx 0.22$), aunque la diferencia es más moderada. Finalmente, dentro de cada especificación, Olley \& Pakes y Levinsohn \& Petrin entregan resultados similares entre sí, lo que habla de robustez de las estimaciones ante distintas estrategias de identificación de la productividad no observada $\omega_{it}$.
+
+Ver código: \texttt{code/hw1-solution.do} líneas 45--124.
+\end{solution}
+
+\end{questions}
+
+\end{document}
