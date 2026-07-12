@@ -1,0 +1,323 @@
+# Rúbrica estructurada de Tarea 2 (demanda de bienes diferenciados: Logit, Nested Logit, BLP).
+# Generada a partir de solution/report/hw2-report.tex (+ bld/tab/*.tex) y hw-report-explanation.md.
+# Consumida por la skill `corregir-tarea` (agentes extractor-resultados / verificador-explicacion +
+# scorer determinístico). No editar los valores sin volver a chequear contra el report compilado.
+
+tarea: hw2
+hoja_notas: hw_2
+formula_nota: "Nota = round(1 + (Total_% / 100) * 6, 1)"  # Total_% = suma de (score_item/5 * peso_item)*100, con Σ peso = 1
+
+fuente_numeros: >
+  report/build/hw2-report.pdf es la referencia de corrección (reproducible con raw/*.csv).
+  hw2-solution.pdf (profesor) respalda la lectura económica pero NO manda para los números —
+  ver hw-report-explanation.md para las dos excepciones documentadas abajo.
+
+notas_generales:
+  - id_afectados: [3b, 4e]
+    nota: >
+      Las matrices de elasticidad de la farmacia 109/semana 39 NO se reproducen celda a celda contra
+      hw2-solution.pdf (probable re-indexación de mercados en los datos del profesor). Usar la matriz
+      de report/build/hw2-report.pdf como referencia. Que una entrega no calce con el PDF del
+      profesor no es motivo de descuento si calza con el report. Validado independientemente por 3
+      entregas (Castillo, Álvarez, Sandoval) que reprodujeron exactamente la diagonal del report.
+  - id_afectados: [BLP1, BLP2, BLP3]
+    nota: >
+      sigma_G (coeficiente aleatorio del genérico) está débilmente identificado (EE≈1.4, objetivo GMM
+      casi plano en sigma_G). Aceptar tanto GMM 1 paso (sigma_G≈0.39, el valor del report) como GMM 2
+      pasos (sigma_G≈0.78-0.81, el valor del profesor y de varias entregas) — no penalizar por cuál se
+      usó. El resto de los parámetros (alpha, alpha_I, efecto medio del precio, objetivo GMM) coincide
+      estrechamente entre ambas versiones; las matrices de elasticidad difieren ~20-30% en magnitud
+      como consecuencia de sigma_G, con el mismo patrón cualitativo.
+  - id_afectados: [4c, 4d, 4e]
+    nota: >
+      Nested Logit IV admite dos especificaciones defendibles: (a) instrumentar solo el precio
+      (la que sigue el .do del profesor / el report: precio≈+0.11, sigma≈1.10 — MC2E≈MCO, sugiere que
+      el instrumento de Hausman está casi colineal con el precio); (b) instrumentar precio y
+      ln(s_j|g) simultáneamente (alternativa más estándar: precio≈-0.49, sigma≈-2.96 — corrige el
+      signo del precio pero sigma queda fuera de [0,1), identificación débil del nido). Ambas
+      concluyen "la identificación del nido falla", por razones distintas. Aceptar cualquiera de las
+      dos si la conclusión cualitativa es correcta y está bien argumentada.
+
+items:
+  # ---------------------------------------------------------------- Parte 1: Logit y Nested Logit
+  - id: 1a
+    seccion: Logit
+    peso: 0.0375
+    pregunta: "Logit por MCO, Modelo 1 (promociones como única característica observada)"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio, valor_esperado: -0.051, se: 0.007}
+        - {nombre: promocion, valor_esperado: 0.213, se: 0.015}
+      tolerancia: se_anchored
+    puntos_teoricos:
+      - "el coeficiente de precio es pequeño en magnitud porque MCO usa toda la variación de precio y el supuesto E[xi|X]=0 es poco creíble"
+      - "el precio se fija en parte en función de la calidad no observada xi, lo que atenúa el coeficiente hacia cero (sesgo de endogeneidad)"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Logit MCO'"
+
+  - id: 1b
+    seccion: Logit
+    peso: 0.0375
+    pregunta: "Logit por MCO, Modelo 2 (+ dummies de marca, a la Nevo)"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio, valor_esperado: -0.341, se: 0.024}
+        - {nombre: promocion, valor_esperado: 0.329, se: 0.015}
+      tolerancia: se_anchored
+    puntos_teoricos:
+      - "las dummies de marca absorben el componente de xi específico del producto (calidad media de cada presentación)"
+      - "con efectos fijos de producto, E[xi|X]=0 es más plausible; la identificación viene de la variación del precio dentro de cada producto"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Logit MCO'"
+
+  - id: 1c
+    seccion: Logit
+    peso: 0.0375
+    pregunta: "Logit por MCO, Modelo 3 (+ dummies producto x farmacia)"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio, valor_esperado: -0.330, se: 0.017}
+        - {nombre: promocion, valor_esperado: 0.329, se: 0.013}
+      tolerancia: se_anchored
+    puntos_teoricos:
+      - "el coeficiente es similar al Modelo 2 porque las dummies brand#store dan cuenta de la calidad media por producto y por tienda"
+      - "la identificación queda restringida a desviaciones respecto de esas medias (variación temporal dentro de cada producto-farmacia)"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Logit MCO'"
+
+  - id: 1d
+    seccion: Logit
+    peso: 0.0375
+    pregunta: "Comentar coeficientes de precio/promoción en los 3 modelos; justificar las dummies de marca"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "el precio pasa de ≈-0.05 (Modelo 1) a ≈-0.33/-0.34 (Modelos 2-3), mientras la promoción se mantiene positiva y estable (≈0.21-0.33)"
+      - "la justificación de las dummies de marca es controlar por la calidad no observada específica del producto, correlacionada con el precio"
+      - "hay un trade-off entre plausibilidad del supuesto de exogeneidad y la fuente de variación disponible al agregar efectos fijos"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  - id: 2a
+    seccion: LogitIV
+    peso: 0.0375
+    pregunta: "MC2E con precios mayoristas (cost) como instrumento, 3 modelos"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio_modelo1, valor_esperado: -0.011}
+        - {nombre: precio_modelo2, valor_esperado: -0.008}
+        - {nombre: precio_modelo3, valor_esperado: -0.035}
+      tolerancia: pct_relativo
+      pct: 10
+    puntos_teoricos:
+      - "con cost como instrumento el coeficiente de precio sigue cercano a cero, incluso menos negativo que en MCO con dummies"
+      - "la instrumentación no corrige el sesgo en la dirección esperada"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Logit IV'"
+
+  - id: 2b
+    seccion: LogitIV
+    peso: 0.0375
+    pregunta: "¿Son los precios mayoristas un buen instrumento? ¿Por qué?"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "el costo mayorista podría ser proxy de costos marginales, pero ya incluye un margen del fabricante que depende de la calidad/demanda no observada del producto"
+      - "por eso arrastra el mismo problema de endogeneidad de origen: cost no es buen instrumento en esta aplicación"
+      - "esto es consistente con que las estimaciones IV-costo no se vuelvan más negativas (no corrigen el sesgo en la forma esperada)"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  - id: 2c
+    seccion: LogitIV
+    peso: 0.0375
+    pregunta: "MC2E con instrumentos a la Hausman (precio medio en otras farmacias, misma semana), 3 modelos"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio_modelo1, valor_esperado: -0.051}
+        - {nombre: precio_modelo2, valor_esperado: -0.547}
+        - {nombre: precio_modelo3, valor_esperado: -0.548}
+      tolerancia: pct_relativo
+      pct: 10
+    puntos_teoricos:
+      - "con el instrumento de Hausman y dummies de marca el precio se vuelve marcadamente más negativo, consistente con corregir la atenuación por endogeneidad"
+      - "en el Modelo 1 (sin dummies) el efecto instrumentado es menor porque el no observable relevante ahí no es específico del producto"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Logit IV'"
+
+  - id: 2d
+    seccion: LogitIV
+    peso: 0.0375
+    pregunta: "¿Es la media de precios en otros mercados un buen instrumento aquí?"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "la validez descansa en que los shocks de costo estén correlacionados entre farmacias (mismo producto, misma semana) pero los shocks de demanda xi sean independientes entre mercados"
+      - "es más defendible en las especificaciones con dummies de marca, donde el no observable relevante es específico del mercado (farmacia-semana) y no del producto"
+      - "es un instrumento más defendible que el costo mayorista en esta aplicación"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  - id: 3a
+    seccion: Elast
+    peso: 0.05
+    pregunta: "Elasticidad propia media por producto en los 9 modelos; importancia de controlar por endogeneidad"
+    resultado:
+      tipo: elasticidad_media
+      variables:
+        - {nombre: MCO1_total, valor_esperado: -0.225}
+        - {nombre: MCO2_total, valor_esperado: -1.497}
+        - {nombre: MCO3_total, valor_esperado: -1.448}
+        - {nombre: IVcosto1_total, valor_esperado: -0.046}
+        - {nombre: IVcosto2_total, valor_esperado: -0.035}
+        - {nombre: IVcosto3_total, valor_esperado: -0.152}
+        - {nombre: IVhausman1_total, valor_esperado: -0.224}
+        - {nombre: IVhausman2_total, valor_esperado: -2.398}
+        - {nombre: IVhausman3_total, valor_esperado: -2.403}
+      tolerancia: pct_relativo
+      pct: 10
+    puntos_teoricos:
+      - "sin controlar por endogeneidad (MCO Modelo 1, IV-costo) las elasticidades son muy pequeñas en magnitud (|eta|<<1), implicando precios en el tramo inelástico: económicamente implausible"
+      - "con dummies de producto o instrumentos de Hausman |alpha_hat| crece y las elasticidades se vuelven |eta|>1, mucho más razonables"
+      - "controlar por endogeneidad es decisivo para obtener elasticidades creíbles"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Elasticidades'"
+
+  - id: 3b
+    seccion: Elast
+    peso: 0.05
+    pregunta: "Matriz de elasticidades propias y cruzadas, farmacia 109, semana 39 (Logit)"
+    resultado:
+      tipo: matriz
+      referencia: "bld/tab/q3b_elas_matrix_logit_brand.tex (Modelo con dummies/IV Hausman — ver notas_generales id_afectados:[3b,4e])"
+      diagonal_esperada_rango: [-4.08, -1.09]  # ver tabla para los 11 valores exactos
+      patron_esperado: "cruzadas prácticamente nulas (IIA); diagonal negativa con la escala del alpha con dummies/IV Hausman"
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "las cruzadas son prácticamente nulas porque el bien externo concentra casi toda la cuota (s0≈0.995) y porque el Logit impone IIA"
+      - "bajo IIA la cruzada eta_jk solo depende de p_k*s_k, igual para todo j — produce sustitución poco realista"
+      - "esto motiva modelos más flexibles (Nested Logit y BLP)"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  - id: 4a
+    seccion: NL
+    peso: 0.05
+    pregunta: "Escribir xi como función lineal de variables y parámetros (inversión de Berry, Nested Logit)"
+    resultado:
+      tipo: derivacion
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "la inversión de Berry entrega ln(s_jmt/s_0mt) = x'beta + alpha*p + sigma*ln(s_j|g,mt) + xi_jmt"
+      - "s_j|g,mt es la cuota del producto dentro de su segmento y sigma en [0,1) mide la correlación de preferencias dentro del nido"
+      - "ln(s_j|g) es endógeno porque depende de xi, por lo que requiere instrumentación"
+    trazabilidad: "construcción de l_sjg en code/hw2_logit_nl.py"
+
+  - id: 4b
+    seccion: NL
+    peso: 0.05
+    pregunta: "Estimar Nested Logit por MCO con promociones (sin dummies de producto)"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio, valor_esperado: 0.110, se: 0.002}
+        - {nombre: l_sjg, valor_esperado: 1.100, se: 0.006}
+        - {nombre: promocion, valor_esperado: -0.008, se: 0.011}
+      tolerancia: se_anchored
+    puntos_teoricos:
+      - "el coeficiente de precio resulta positivo y sigma≈1.10, fuera del rango admisible [0,1)"
+      - "ambos síntomas anticipan problemas de endogeneidad/identificación: ln(s_j|g) y el precio están correlacionados con xi"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Nested logit'"
+
+  - id: 4c
+    seccion: NL
+    peso: 0.05
+    pregunta: "Estimar Nested Logit por MC2E con instrumentos de Hausman y n_segm"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: precio, valor_esperado: 0.113, se: 0.002}
+        - {nombre: l_sjg, valor_esperado: 1.103, se: 0.007}
+        - {nombre: promocion, valor_esperado: -0.007, se: 0.011}
+      tolerancia: se_anchored
+      nota: "ver notas_generales id_afectados:[4c,4d,4e] — especificación alternativa (instrumentar precio y l_sjg) también válida, con precio≈-0.49, sigma≈-2.96"
+    puntos_teoricos:
+      - "la instrumentación (Hausman + n_segm) no corrige el problema: precio sigue positivo y sigma≈1.10"
+    trazabilidad: "code/hw2_logit_nl.py, sección 'Nested logit'"
+
+  - id: 4d
+    seccion: NL
+    peso: 0.05
+    pregunta: "Comentar los coeficientes de precio y promoción en los 2 modelos de Nested Logit"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "en ambos modelos el precio tiene signo positivo, lo que delata endogeneidad no corregida"
+      - "el instrumento de Hausman está casi perfectamente correlacionado con el precio (precios mayoristas/finales bastante uniformes a nivel nacional), por lo que aporta poca información independiente una vez incluido ln(s_j|g)"
+      - "sigma>1 viola la consistencia del modelo Nested Logit; las estimaciones no son confiables en esta especificación"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  - id: 4e
+    seccion: NL
+    peso: 0.05
+    pregunta: "Matriz de elasticidades farmacia 109/semana 39 (Nested Logit) y comparación con Logit"
+    resultado:
+      tipo: matriz
+      referencia: "bld/tab/q4e_nl_elas_matrix.tex — ver notas_generales id_afectados:[3b,4e]"
+      patron_esperado: "signo y escala anómalos (herencia de alpha>0, sigma>1); en principio el NL debería dar mayor sustitución dentro del segmento que entre segmentos, pero ese patrón solo es interpretable si sigma en [0,1) y el precio tiene signo correcto"
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "con alpha>0 y sigma>1 la matriz hereda los problemas de identificación de 4d: las elasticidades no admiten lectura económica directa"
+      - "el Nested Logit debería permitir mayor sustitución dentro de cada segmento que entre segmentos (relajando la IIA), pero eso no se observa aquí porque sigma y el precio quedan mal identificados"
+    trazabilidad: "code/hw2_logit_nl.py"
+
+  # ---------------------------------------------------------------- Parte 2: BLP
+  - id: BLP1
+    seccion: BLP
+    peso: 0.116667
+    pregunta: "Estimar el modelo de coeficientes aleatorios (BLP)"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: alpha_precio, valor_esperado: -1.329}
+        - {nombre: alpha_I_precio_x_ingreso, valor_esperado: 0.083}
+        - {nombre: efecto_medio_precio, valor_esperado: -0.448}
+        - {nombre: objetivo_GMM, valor_esperado: 362.7}
+      tolerancia: pct_relativo
+      pct: 20  # BLP es sensible a optimizador/semilla/integración — tolerancia más amplia
+      nota: "sigma_G no se penaliza por valor puntual — ver notas_generales id_afectados:[BLP1,BLP2,BLP3]"
+    puntos_teoricos:
+      - "el efecto medio del precio (alpha + alpha_I*I_barra) es similar al del Logit IV comparable"
+      - "alpha_I>0 indica que los hogares de mayor ingreso son menos sensibles al precio"
+      - "sigma_G captura dispersión en la valoración de los genéricos entre consumidores"
+      - "la diferencia con el Logit no está en los efectos medios sino en los patrones de sustitución (elasticidades cruzadas)"
+    trazabilidad: "code/hw2_blp.py"
+
+  - id: BLP2
+    seccion: BLP
+    peso: 0.116667
+    pregunta: "Elasticidades con la fórmula de BLP (farmacia 109, semana 39)"
+    resultado:
+      tipo: matriz
+      referencia: "bld/tab/blp2_elas_matrix.tex"
+      diagonal_esperada_rango: [-2.27, -0.65]
+      patron_esperado: "cruzadas no constantes por columna (a diferencia del Logit); varían según cercanía en precio y en el atributo genérico"
+      tolerancia: cualitativo
+      nota: "magnitud puede diferir ~20-30% según sigma_G (1 vs 2 pasos) sin ser incorrecta — ver notas_generales"
+    puntos_teoricos:
+      - "a diferencia del Logit, las cruzadas no son constantes por columna: rompen IIA"
+      - "los consumidores sensibles al precio sustituyen más hacia alternativas baratas, generando el patrón de sustitución heterogéneo"
+    trazabilidad: "code/hw2_blp.py (compute_elasticities)"
+
+  - id: BLP3
+    seccion: BLP
+    peso: 0.116667
+    pregunta: "Comparar elasticidades de BLP, Logit y Nested Logit"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "las elasticidades propias de BLP y del Logit IV son de magnitud comparable"
+      - "el aporte del BLP está en las cruzadas: sustitución más rica y realista, que varía entre alternativas según similitud (precio, marca, condición de genérico), en vez del patrón uniforme por IIA del Logit"
+      - "el Nested Logit no entrega una comparación útil aquí por los problemas de identificación ya discutidos (sigma>1, precio positivo)"
+      - "limitación a notar: como el bien externo concentra casi toda la cuota, la sustitución hacia los bienes internos es pequeña"
+    trazabilidad: "code/hw2_blp.py y code/hw2_logit_nl.py"

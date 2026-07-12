@@ -1,6 +1,27 @@
 # Folders
 archive/
-2026_fall/01-homeworks/pbordon/hw1/submissions
+
+# Entregas de estudiantes: nunca se versionan (PDFs, código, datos, PII).
+# Cubre cualquier profesor/tarea, presente o futura.
+2026_fall/01-homeworks/*/hw*/submissions/
+
+# Ruido de macOS / editores
+.DS_Store
+__MACOSX/
+
+# Python (entornos, cachés y objetos serializados de las pautas/entregas)
+.venv/
+__pycache__/
+*.pyc
+*.obj
+.ipynb_checkpoints/
+
+# LaTeX build (auxiliares; el PDF compilado sí se versiona)
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 
 # Data files
 *.csv
@@ -11,3 +32,8 @@ archive/
 *.tar.gz
 *.7z
 *.log
+
+# Trabajo de corrección del TA (scratch/backup de extracción y verificación,
+# puede contener citas textuales de entregas) — vive junto a submissions/.
+2026_fall/01-homeworks/*/hw*/_grading/
+2026_fall/01-homeworks/*/hw*/_correccion/

@@ -1,0 +1,239 @@
+# Rúbrica estructurada de Homework 4 (jpazm, Parte II del curso): demanda BLP, costos y bounds de
+# costo fijo en un mercado de aerolíneas + fusión con retiro de rutas.
+# Generada a partir de assignment/hw_2_airlines.pdf (enunciado) y solutions/solutions_tarea2.pdf
+# (pauta completa del profesor/RA). Consumida por la skill `corregir-tarea`.
+
+tarea: jpazm_hw2
+parejas_permitidas: true  # "groups of two" — una entrega puede mapear a 2 códigos de alumno
+
+salida:
+  libro: "2026_fall/docencia-web/notas.xlsx"
+  hoja: "ii. tarea_2"
+  columna_id: "ID"           # sin columna Nombre separada — replica el estilo de la hoja hermana "i. tarea_2"
+  estilo_referencia: "hoja 'i. tarea_2' del mismo libro (misma estructura de columnas: ID, <items>, Total %, Nota)"
+
+formula_nota: "Nota = round(1 + (Total_% / 100) * 6, 1)"  # igual convención que pbordon/hw2
+
+fuente_numeros: >
+  solutions/solutions_tarea2.pdf (pauta del profesor/RA) es la única fuente — no hay un "report"
+  reproducido aparte como en pbordon/hw2, porque el profesor ya entregó la pauta completa.
+
+notas_generales:
+  - id_afectados: [P3a, P3b, P3c]
+    nota: >
+      El enunciado (assignment/hw_2_airlines.pdf) describe la Parte 3 como "(optional)" en el
+      resumen inicial, pero el profesor indicó directamente al TA que las 3 partes son
+      OBLIGATORIAS. Se sigue esa instrucción sin matices: Parte 3 pesa como el resto (35% en
+      conjunto) y una Parte 3 ausente o no intentada se puntúa 0 en P3a/P3b/P3c, igual que
+      cualquier otro ítem no entregado — no se trata como "opcional" ni se suaviza el descuento
+      aunque el alumno cite el PDF.
+  - id_afectados: [P1a, P1b, P1c, P3b]
+    nota: >
+      "Numbers are from the provided data; last-decimal values are seed- and N_DRAWS-dependent, but
+      signs, magnitudes, and patterns are stable" (nota explícita de la pauta). Por eso estos ítems
+      usan tolerancia pct_relativo ancha (~20-25%), más ancha que el ~10% usado en pbordon/hw2. Lo
+      que importa es signo, orden de magnitud y el patrón (p. ej. mc>0 en P1a, floored-mc share=0%
+      en P1b, lower<upper en P1c), no el último decimal.
+  - id_afectados: [P3a]
+    nota: >
+      El enunciado dice explícitamente "pick any" ruta head-to-head para la Parte 3(a) — la ruta
+      elegida varía legítimamente por alumno/pareja. No comparar contra los números puntuales del
+      ejemplo de la pauta (ruta R00_T0, CSpre=75.6) salvo que el alumno haya elegido esa misma
+      ruta por coincidencia. Evaluar el PATRÓN: ambos vuelos at-risk a todo κ>0, la cancelación
+      consistente es única (no salida total de la ruta), y la descomposición repricing/withdrawal
+      tiene el signo correcto (repricing→0 en κ=0, crece en magnitud con κ; withdrawal domina y es
+      aprox. κ-invariante).
+  - id_afectados: [P1a]
+    nota: >
+      Ninguna interpretación se exige en la Parte 1 (el enunciado dice explícitamente "No
+      interpretation yet — that is Part 2"). Los ítems P1a/P1b/P1c se puntúan solo por exactitud
+      numérica (scorer determinístico); no despachar `verificador-explicacion` para ellos, o
+      hacerlo solo para confirmar que se registró la convergencia (chequeo trivial, no cuenta como
+      cobertura teórica).
+
+items:
+  # ---------------------------------------------------------------- Parte 1: correr el pipeline (sin interpretación)
+  - id: P1a
+    seccion: Parte1
+    peso: 0.066667
+    pregunta: "Parte 1(a): correr run_demand_airlines.py y registrar los coeficientes de demanda BLP"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: fare_alpha, valor_esperado: -0.012}
+        - {nombre: freq, valor_esperado: 0.39}
+        - {nombre: premium, valor_esperado: 0.49}
+        - {nombre: service, valor_esperado: 0.30}
+        - {nombre: sigma_const, valor_esperado: 0.30}
+        - {nombre: sigma_price, valor_esperado: 0.006}
+        - {nombre: pi_inc_const, valor_esperado: 0.35}
+        - {nombre: pi_inc_price, valor_esperado: 0.004}
+      tolerancia: pct_relativo
+      pct: 25
+      nota: "elasticidad media y Lerner NO van aquí — el enunciado los pide recién en P2a, no en el Part 1(a). Evita puntuar el mismo número dos veces."
+    puntos_teoricos: []  # sin interpretación exigida en Parte 1 — ver notas_generales
+    trazabilidad: "assignment/run_demand_airlines.py"
+
+  - id: P1b
+    seccion: Parte1
+    peso: 0.066667
+    pregunta: "Parte 1(b): correr run_supply_airlines.py y registrar coeficientes de costo + floored-mc share"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: gamma_fuel, valor_esperado: 0.21}
+        - {nombre: gamma_fees, valor_esperado: 0.09}
+        - {nombre: gamma_distance, valor_esperado: 0.29}
+        - {nombre: gamma_freq, valor_esperado: 0.09}
+        - {nombre: gamma_premium, valor_esperado: 0.17}
+        - {nombre: gamma_service, valor_esperado: 0.00}
+        - {nombre: floored_mc_share, valor_esperado: 0.00}
+        - {nombre: sd_omega, valor_esperado: 0.09}
+      tolerancia: pct_relativo
+      pct: 25
+    puntos_teoricos: []
+    trazabilidad: "assignment/run_supply_airlines.py"
+
+  - id: P1c
+    seccion: Parte1
+    peso: 0.066667
+    pregunta: "Parte 1(c): correr run_fixedcosts_airlines.py y registrar bounds medianos + función de costo fijo ajustada"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: mediana_upper_bound_offered, valor_esperado: 15.5, rango: [15, 16]}
+        - {nombre: mediana_lower_bound_non_offered, valor_esperado: 8, rango: [7, 9]}
+        - {nombre: pct_inequalities_satisfied, valor_esperado: 86}
+      tolerancia: pct_relativo
+      pct: 25
+      nota: "lower < upper es un chequeo binario obligatorio, no de tolerancia — si se cruzan, es error, no ruido de semilla"
+    puntos_teoricos: []
+    trazabilidad: "assignment/run_fixedcosts_airlines.py"
+
+  # ---------------------------------------------------------------- Parte 2: interpretación
+  - id: P2a
+    seccion: Parte2
+    peso: 0.09
+    pregunta: "Signo/magnitud del coeficiente de fare, elasticidad media, Lerner; por qué el logit simple falla para fusiones"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: elasticidad_media_fare, valor_esperado: -2.8, rango: [-3.5, -2.0]}
+      tolerancia: pct_relativo
+      pct: 25
+    puntos_teoricos:
+      - "el coeficiente de fare es negativo y las elasticidades propias están entre -2 y -3.5, demanda elástica"
+      - "el logit simple impone IIA: cuando sube la tarifa de un vuelo, los viajeros perdidos se reparten entre todos los rivales en proporción a su cuota de mercado, sin importar cuán similares sean"
+      - "eso es incorrecto para analizar una fusión porque predeciría la misma sustitución hacia un rival lejano que hacia uno casi idéntico, distorsionando tanto el incentivo a resubir precios como qué vuelos cancelaría la fusionada"
+      - "el coeficiente aleatorio en fare más la interacción con ingreso rompen IIA y permiten que vuelos cercanos sean sustitutos más cercanos entre sí"
+    trazabilidad: "assignment/run_demand_airlines.py"
+
+  - id: P2b
+    seccion: Parte2
+    peso: 0.09
+    pregunta: "Tabla de diversión A-B por ruta head-to-head; qué mide la diversión y su rol en la Parte 3"
+    resultado:
+      tipo: matriz
+      referencia: "output impreso de run_demand_airlines.py — tabla de rutas donde A y B operan ambos, con D_jk, D_kj y D̄_AB simetrizado"
+      rango_esperado: [0.11, 0.27]
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "D_jk es la fracción de viajeros que dejan el vuelo j cuando sube su tarifa y cambian al vuelo k"
+      - "en una ruta head-to-head el par A-B es el overlap, y D̄_AB=(D_jk+D_kj)/2 mide cuán cercanos son esos dos vuelos como sustitutos"
+      - "no es un criterio de selección de rutas (todo par en ruta compartida es un overlap); es la magnitud que predice la recaptura de tráfico, y por tanto cuánta presión de retiro tendrá esa ruta en la Parte 3"
+      - "mayor D̄_AB implica más tráfico recapturado al cancelar uno de los dos vuelos"
+    trazabilidad: "assignment/run_demand_airlines.py"
+
+  - id: P2c
+    seccion: Parte2
+    peso: 0.09
+    pregunta: "Interpretar la ecuación de costos; floored-mc share y la crítica de Corts"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: floored_mc_share, valor_esperado: 0.00}
+      tolerancia: pct_relativo
+      pct: 5  # esperado exactamente 0%; cualquier desviación grande amerita revisión, no ruido de semilla
+    puntos_teoricos:
+      - "el costo marginal sube con combustible, distancia, frecuencia y premium; service es (correctamente) ≈0"
+      - "el floored-mc share es 0%: ningún markup recuperado supera su tarifa"
+      - "un floored share grande implicaría markups por sobre el precio, algo económicamente imposible bajo el supuesto de conducta Bertrand-Nash asumido — eso rechazaría la especificación conjunta de demanda/conducta (la crítica de Corts: demanda y conducta se testean juntas)"
+    trazabilidad: "assignment/run_supply_airlines.py"
+
+  - id: P2d
+    seccion: Parte2
+    peso: 0.09
+    pregunta: "Por qué una ruta ofrecida entrega un upper bound y una no ofrecida un lower bound; por qué no se cruzan"
+    resultado:
+      tipo: derivacion
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "una aerolínea ofrece una ruta solo si el beneficio variable esperado cubre el costo fijo, así que para una ruta ofrecida F_j ≤ ΔVP_j^pre (upper bound)"
+      - "se mantiene fuera de una ruta factible solo si el beneficio de entrar no cubriría el costo fijo, así que para una ruta no ofrecida F_k ≥ ΔVP_k (lower bound)"
+      - "la selección corre en direcciones opuestas para ambos grupos, por eso los upper bounds de las ofrecidas quedan por sobre los lower bounds de las no ofrecidas y los dos conjuntos no se cruzan"
+    trazabilidad: "assignment/run_fixedcosts_airlines.py"
+
+  - id: P2e
+    seccion: Parte2
+    peso: 0.09
+    pregunta: "Lectura de la función de costo fijo ajustada F_j=φ'W_j; ¿las rutas premium cuestan más operar?"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "F_j=φ'W_j es creciente en frecuencia, premium y service: rutas voladas más seguido, con cabina premium, o con mayor costo de servicio cuestan más mantener en el itinerario"
+      - "las rutas premium en particular muestran bounds más altos y un coeficiente premium positivo, consistente con el lado de costo marginal (donde premium también sube el costo)"
+    trazabilidad: "assignment/run_fixedcosts_airlines.py"
+
+  # ---------------------------------------------------------------- Parte 3: fusión con retiro de rutas (obligatoria)
+  - id: P3a
+    seccion: Parte3
+    peso: 0.10
+    pregunta: "Entender la mecánica en una ruta (κ=0.5): tabla ΔVP por vuelo + intervalo de ΔCS con su descomposición"
+    resultado:
+      tipo: matriz
+      referencia: "output de merger_engine.py corrido como script sobre una ruta head-to-head elegida por el alumno (cualquiera)"
+      tolerancia: cualitativo
+      nota: "no comparar contra los números puntuales de R00_T0 salvo coincidencia de ruta — ver notas_generales"
+    puntos_teoricos:
+      - "ambos vuelos (A y B) quedan at-risk a todo κ>0: la propiedad conjunta baja el valor incremental de cada vuelo por debajo de su techo de costo fijo pre-fusión"
+      - "la salida de la ruta no es consistente: al cancelar un vuelo, su hermano recaptura el tráfico y sube por sobre su propio bound — por eso el peor caso consistente es una única cancelación, no la salida total de la ruta"
+      - "el intervalo de ΔCS se descompone en repricing (CSpost(J)-CSpre) y withdrawal (CSpost(cancelar uno)-CSpost(J))"
+    trazabilidad: "assignment/merger_engine.py (delta_vp, consumer_surplus)"
+
+  - id: P3b
+    seccion: Parte3
+    peso: 0.15
+    pregunta: "Loop completo: las 60 rutas head-to-head × κ∈{0,0.25,0.5,0.75,1} — medianas y conteo de at-risk"
+    resultado:
+      tipo: coeficiente
+      variables:
+        - {nombre: mediana_repricing_k0, valor_esperado: 0.00}
+        - {nombre: mediana_repricing_k1, valor_esperado: -6.11}
+        - {nombre: mediana_withdrawal_k0, valor_esperado: -25.7}
+        - {nombre: mediana_withdrawal_k1, valor_esperado: -18.6}
+        - {nombre: mediana_width_k0, valor_esperado: 25.7}
+        - {nombre: mediana_width_k1, valor_esperado: 18.6}
+        - {nombre: pct_celdas_ambos_at_risk, valor_esperado: 84.3}  # 253/300
+        - {nombre: correlacion_width_diversion_k05, valor_esperado: 0.59}
+      tolerancia: pct_relativo
+      pct: 25
+      nota: "verificar que el loop cubrió las 5 rutas... 60 rutas x 5 kappas = 300 celdas, no solo la ruta de ejemplo de P3a"
+    puntos_teoricos:
+      - "el loop recorre TODAS las rutas head-to-head (no solo la del ejemplo de 3a) y los 5 valores de κ"
+      - "para cada (ruta, κ) se registra el conjunto at-risk y el intervalo de ΔCS con sus dos extremos, ancho y descomposición repricing/withdrawal"
+    trazabilidad: "código propio del alumno (loop sobre merger_engine.py) — la pauta lo llama solution_part3.py"
+
+  - id: P3c
+    seccion: Parte3
+    peso: 0.10
+    pregunta: "Agregar y conectar con la Parte 2(b): ¿rutas con mayor D̄_AB muestran mayor efecto de retiro?"
+    resultado:
+      tipo: comentario
+      tolerancia: cualitativo
+    puntos_teoricos:
+      - "la pérdida por repricing (identificada puntualmente) crece en magnitud con κ; el peor caso set-identificado (cancelar un vuelo) es aproximadamente invariante a κ"
+      - "en κ=0 el repricing es exactamente cero, así que todo el daño potencial es withdrawal: el canal de racionalización de portafolio opera incluso sin coordinación de tarifas"
+      - "la correlación positiva entre el ancho del intervalo y la diversión D̄_AB de la Parte 2(b) (+0.59) implica que rutas con sustitutos A-B más cercanos tienen mayor recaptura, y por tanto un daño de retiro mayor y más ambiguo (intervalo más ancho)"
+      - "incluye una figura de ΔCS mediano (mejor y peor caso) vs. κ, y un scatter de ancho del intervalo vs. D̄_AB"
+    trazabilidad: "código propio del alumno + assignment/merger_engine.py"

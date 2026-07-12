@@ -1,0 +1,33 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Estimaci\'on BLP: Logit (IV) vs.\ Coeficientes Aleatorios}
+\begin{tabular}{lcc}
+\toprule
+& Logit (IV) & Coef.\ Aleatorios (BLP) \\
+\midrule
+Precio ($\alpha$) & -0.547 & -1.329 \\
+Promoci\'on & 0.267 & 0.306 \\
+Tylenol (25) & --- & -5.742 \\
+Tylenol (50) & --- & -4.931 \\
+Tylenol (100) & --- & -4.548 \\
+Advil (25) & --- & -6.210 \\
+Advil (50) & --- & -5.798 \\
+Advil (100) & --- & -5.407 \\
+Bayer (25) & --- & -7.459 \\
+Bayer (50) & --- & -7.316 \\
+Bayer (100) & --- & -6.239 \\
+Generic (50) & --- & -7.152 \\
+Generic (100) & --- & -6.519 \\
+\midrule
+$\alpha$ (precio, medio) & -0.547 & -1.329 \\
+$\sigma_G$ (gen\'erico, aleatorio) & --- & 0.385 \\
+$\alpha_I$ (precio$\times$ingreso) & --- & 0.083 \\
+Efecto medio del precio$^{*}$ & -0.547 & -0.448 \\
+Objetivo GMM & --- & 362.7 \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\footnotesize\begin{minipage}{0.92\linewidth}$^{*}$ Efecto medio del precio en BLP $=\alpha+\alpha_I\bar{I}$, con $\bar{I}=10.63$. Logit (IV) = Modelo 2 con dummies de marca e instrumentos a la Hausman.\end{minipage}}
+\end{table}

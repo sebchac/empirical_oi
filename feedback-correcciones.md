@@ -1,0 +1,10 @@
+- Este es el feedback de las correcciones que dejaste en "hw2_grades.xlsx". Lo que hice fue revisar cada informe y comparar mi criterio con las notas que dejaste en el Excel. También revisé "hw2-report.pdf"
+- Primero, y en general, me parece que está bien dejar puntos cerrados de 1 a 5, pero la nota final sí puede estar en decimales, según los puntos obtenidos en cada pregunta y la ponderación de la sección. No debe ser notas de 5 o 6 o 7 necesariamente. Lo que importa es el puntaje de cada pregunta, y luego dejamos la nota en base a aquello nomás.
+- Puedo notar que los resultados de las primeras secciones son exactos a lo que indica la pauta. Me parece que esa parte les resultó más fácil. Por otro lado, puede haber diferencias en las matrices de elasticidad y en las últimas secciones, pues son más difíciles. Ahí los resultados no son tan exactos, y se debe corregir en base a eso.
+
+# Alvarez
+- Resultados iguales hasta (2.2.c). En (2.2.d) se incorpora correctamente la observación de la pauta con respecto a los shocks de oferta comunes y shocks de demanda independientes.
+- En (2.3.a) se reporta la elasticidad media correctamente. Se debe comentar sobre la relevancia de controlar por endogeneidad.
+- En (2.3.b), la matriz de elasticidades para la farmacia 109 en la semana 39 no calza con las de la pauta. Se debe identificar por qué y restar puntos si corresponde.
+- En la sección de Nested Logit, se muestra que los resultados no cambian sustantivamente entre MCO y MC2E, debido a que el instrumento está casi perfectamente correlacionado con el precio, lo que hace que el instrumento sea casi idéntico a la variable endógena. Alvarez no llega a esa conclusión, se debe identificar por qué y restar puntos si corresponde. Aquello también cambia la matriz de elasticidades.
+- En la sección de BLP, se debe revisar el coeficiente asociado al precio y el efecto medio del precio, y restar puntos si corresponde según la desviación. Aquello impacta en la matriz de elasticidad. Se debe comentar qué aporta BLP con respecto a heterogeneidades y elasticidades cruzadas.

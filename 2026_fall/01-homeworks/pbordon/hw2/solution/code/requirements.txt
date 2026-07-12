@@ -1,0 +1,10 @@
+# Pauta Tarea 2 - dependencias Python
+# IMPORTANTE: pyblp 1.2.0 NO es compatible con numpy 2.x -> fijar numpy<2.
+numpy<2
+pandas
+scipy
+statsmodels
+linearmodels
+pyblp==1.2.0
+matplotlib
+openpyxl

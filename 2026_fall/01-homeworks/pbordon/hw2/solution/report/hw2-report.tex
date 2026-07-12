@@ -1,0 +1,351 @@
+\documentclass[answers]{exam}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[table,xcdraw]{xcolor}
+
+\usepackage{footnote}
+\usepackage{booktabs}
+\makesavenoteenv{solution}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage[linkcolor=blue,colorlinks=true]{hyperref}
+
+\renewcommand{\solutiontitle}{\noindent\textsf{\textbf{Respuesta}}\par\noindent}
+
+\pagestyle{headandfoot}
+\headrule
+\footrule
+\footer{}{\scriptsize{P\'agina \thepage\ de \numpages}}{}
+\parindent = 0pt
+\renewcommand\thepartno{\alph{partno}}
+\renewcommand\partlabel{\thepartno)}
+
+\begin{document}
+
+\begin{center}
+\textbf{\large{M\'etodos Avanzados de Organizaci\'on Industrial Emp\'irica, Primavera 2026}} \\
+\textbf{\large{Tarea 2: Estimaci\'on de demanda de bienes diferenciados}}
+
+\medskip
+\textbf{Profesores:} \textsc{Paola Bord\'on y Jos\'e Manuel Paz y Mi\~no}
+
+\textbf{Pauta de correcci\'on} (TA: \textsc{Sebasti\'an Chac\'on})
+\end{center}
+\vspace{4mm}
+
+\textit{Nota de reproducibilidad.} Todos los resultados de esta pauta se reproducen con los datos
+distribuidos (\texttt{raw/*.csv}) usando Python: Logit y Nested Logit con
+\texttt{statsmodels}/\texttt{linearmodels} (c\'odigo \texttt{code/hw2\_logit\_nl.py}); BLP con
+\texttt{pyblp} (\texttt{code/hw2\_blp.py}). El mercado relevante es la combinaci\'on
+farmacia-semana (\texttt{store}$\times$\texttt{week}); el tama\~no de mercado es \texttt{count} y las
+cuotas son $s_{jmt}=\texttt{sales}/\texttt{count}$, con bien externo
+$s_{0mt}=1-\sum_j s_{jmt}$.
+
+%==================================================================
+\section*{Parte 1. Estimaci\'on de demanda: Logit y Nested Logit}
+%==================================================================
+
+El modelo Logit a estimar (inversi\'on de Berry) es
+\[
+\ln\!\left(\frac{s_{jmt}}{s_{0mt}}\right)=x_{jmt}'\beta+\alpha\,p_{jmt}+\xi_{jmt}.
+\]
+
+\begin{questions}
+
+%---------------------------------------------------------- Q1
+\question \textbf{Logit por MCO.}
+\begin{parts}
+
+\part Estime el modelo por MCO usando las promociones como caracter\'isticas observadas (Modelo 1),
+con cuotas $s_{jmt}=\texttt{sales}/\texttt{count}$.
+\begin{solution}
+Se estima por MCO $y=\ln(s_j/s_0)$ sobre precio y promoci\'on, con errores robustos agrupados por
+farmacia (\texttt{cluster(store)}).
+
+\input{../bld/tab/q1a_ols1.tex}
+
+El coeficiente de precio es peque\~no en magnitud ($\hat\alpha\approx-0.051$). Bajo MCO la
+identificaci\'on usa \emph{toda} la variaci\'on de precios y descansa en $E[\xi\mid X]=0$; como el
+precio se fija en parte en funci\'on de la calidad no observada $\xi_{jmt}$, el coeficiente est\'a
+atenuado hacia cero (sesgo de endogeneidad). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Logit MCO''.
+\end{solution}
+
+\part Estime el modelo por MCO agregando dummies por producto (Modelo 2), siguiendo la idea de Nevo.
+\begin{solution}
+Se agregan 11 dummies de marca, que absorben el componente de $\xi$ espec\'ifico del producto
+(calidad media de cada presentaci\'on).
+
+\input{../bld/tab/q1b_ols2.tex}
+
+El coeficiente de precio se vuelve mucho m\'as negativo ($\hat\alpha\approx-0.341$). Al controlar por
+efectos fijos de producto, $E[\xi\mid X]=0$ es m\'as plausible y la identificaci\'on proviene de la
+variaci\'on del precio \emph{dentro} de cada producto (entre farmacias y semanas). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Logit MCO''.
+\end{solution}
+
+\part Estime el modelo por MCO agregando dummies producto$\times$farmacia (Modelo 3).
+\begin{solution}
+Se incluyen las dummies de la interacci\'on \texttt{brand\#store} (efectos fijos producto-farmacia).
+
+\input{../bld/tab/q1c_ols3.tex}
+
+El coeficiente de precio ($\hat\alpha\approx-0.330$) es similar al del Modelo 2. Este conjunto m\'as
+flexible de efectos fijos da cuenta de la calidad media por producto y por tienda; la identificaci\'on
+queda restringida a desviaciones respecto de esas medias (variaci\'on temporal dentro de cada
+producto-farmacia). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Logit MCO''.
+\end{solution}
+
+\part Comente los coeficientes de precio y promoci\'on en los 3 modelos. \textquestiondown Cu\'al es la
+justificaci\'on de introducir dummies de marca?
+\begin{solution}
+\input{../bld/tab/q1d_ols_compare.tex}
+
+El coeficiente de precio pasa de $\approx-0.05$ (Modelo 1) a $\approx-0.33$/$-0.34$ (Modelos 2--3),
+mientras que la promoci\'on se mantiene positiva y estable ($\approx0.21$--$0.33$). La
+\textbf{justificaci\'on de las dummies de marca} es controlar por la calidad no observada espec\'ifica
+de cada producto, que est\'a correlacionada con el precio: sin ellas, $\xi$ contiene esa calidad y
+sesga $\hat\alpha$ hacia cero. Con efectos fijos de producto el supuesto $E[\xi\mid X]=0$ es m\'as
+cre\'ible, aunque a costa de usar solo la variaci\'on dentro del producto (existe un \emph{trade-off}
+entre plausibilidad del supuesto y fuente de variaci\'on disponible). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+\end{parts}
+
+%---------------------------------------------------------- Q2
+\question \textbf{Logit por variables instrumentales (MC2E).}
+\begin{parts}
+
+\part Estime los 3 modelos por MC2E usando los precios mayoristas (\texttt{cost}) como instrumento.
+\begin{solution}
+\input{../bld/tab/q2a_iv_cost.tex}
+
+Con el costo mayorista como instrumento, el coeficiente de precio se mantiene cercano a cero
+($\hat\alpha\approx-0.011,\,-0.008,\,-0.035$) e incluso \emph{menos} negativo que en MCO con dummies.
+La instrumentaci\'on no corrige el sesgo en la direcci\'on esperada. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Logit IV''.
+\end{solution}
+
+\part Comente: \textquestiondown son los precios mayoristas un buen instrumento? \textquestiondown Por qu\'e?
+\begin{solution}
+El costo mayorista es el precio que el fabricante cobra al minorista. Podr\'ia ser un \emph{proxy} de
+los costos marginales (v\'alido si afecta el precio final pero no $\xi$). Sin embargo, ese precio
+mayorista \emph{ya} incluye un margen del fabricante que probablemente depende de la calidad/demanda no
+observada del producto, por lo que arrastra el mismo problema de endogeneidad de origen. Coherente con
+esto, en el cuadro comparativo siguiente las estimaciones IV-costo no se vuelven m\'as negativas (no
+corrigen el sesgo en la forma esperada), lo que sugiere que \texttt{cost} \textbf{no es un buen
+instrumento} en esta aplicaci\'on.
+
+\input{../bld/tab/q2_price_allivs.tex}
+\end{solution}
+
+\part Estime los 3 modelos por MC2E con los instrumentos a la Hausman (precio medio del producto en
+otras farmacias, misma semana).
+\begin{solution}
+\input{../bld/tab/q2c_iv_hausman.tex}
+
+Con el instrumento de Hausman y dummies de marca el coeficiente de precio se vuelve marcadamente m\'as
+negativo ($\hat\alpha\approx-0.547$), consistente con corregir la atenuaci\'on por endogeneidad. En el
+Modelo 1 (sin dummies) el efecto es menor ($\approx-0.051$). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Logit IV''.
+\end{solution}
+
+\part Comente: \textquestiondown es la media de precios en otros mercados un buen instrumento aqu\'i?
+\begin{solution}
+La validez del instrumento a la Hausman descansa en que los \emph{shocks de costo} est\'en
+correlacionados entre farmacias (mismo producto, misma semana) pero los \emph{shocks de demanda}
+$\xi_{jmt}$ sean independientes entre mercados. Bajo ese supuesto, el precio del mismo producto en
+otras farmacias es un buen instrumento, especialmente en las especificaciones con dummies de marca,
+donde el no observable relevante es espec\'ifico del mercado (farmacia-semana) y no del producto. Es,
+por tanto, un instrumento m\'as defendible que el costo mayorista en esta aplicaci\'on. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+\end{parts}
+
+%---------------------------------------------------------- Q3
+\question \textbf{Elasticidades.}
+\begin{parts}
+
+\part Calcule la elasticidad propia media por producto en los 9 modelos y comente la importancia de
+controlar por endogeneidad.
+\begin{solution}
+La elasticidad propia Logit por observaci\'on es $\eta_{jj}=\hat\alpha\,p_j(1-s_j)$; se promedia sobre
+farmacias y semanas.
+
+\input{../bld/tab/q3a_elas_means.tex}
+
+Sin controlar por endogeneidad (MCO Modelo 1, IV-costo) las elasticidades propias son muy peque\~nas en
+magnitud ($|\eta|\ll1$), lo que implicar\'ia que las firmas fijan precios en el tramo inel\'astico de la
+demanda: econ\'omicamente implausible. Al introducir dummies de producto o instrumentos a la Hausman,
+$|\hat\alpha|$ crece y las elasticidades se vuelven $|\eta|>1$ (p.\ ej.\ totales $\approx-1.5$ a
+$-2.4$), mucho m\'as razonables. Controlar por endogeneidad es, por tanto, decisivo para obtener
+elasticidades cre\'ibles. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Elasticidades''.
+\end{solution}
+
+\part Calcule la matriz de elasticidades propias y cruzadas para la farmacia 109 en la semana 39.
+\begin{solution}
+Para el Logit, $\eta_{jj}=\hat\alpha\,p_j(1-s_j)$ y $\eta_{jk}=-\hat\alpha\,p_k s_k$ ($j\neq k$).
+
+\input{../bld/tab/q3b_elas_matrix_logit.tex}
+
+\input{../bld/tab/q3b_elas_matrix_logit_brand.tex}
+
+Las elasticidades cruzadas son pr\'acticamente nulas porque (i) el bien externo concentra casi toda la
+cuota ($s_0\approx0.995$) y (ii) el Logit impone IIA: la cruzada $\eta_{jk}$ solo depende de $p_k s_k$,
+igual para todo $j$. Esto produce patrones de sustituci\'on poco realistas, motivaci\'on central para
+los modelos m\'as flexibles (Nested Logit y BLP). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+\end{parts}
+
+%---------------------------------------------------------- Q4
+\question \textbf{Nested Logit.} Segmentos por marca: Tylenol (1,2,3), Advil (4,5,6), Bayer (7,8,9),
+Gen\'erico (10,11).
+\begin{parts}
+
+\part Use el enfoque de Berry para escribir $\xi_{jmt}$ como funci\'on lineal de variables y par\'ametros.
+\begin{solution}
+Con la utilidad $u_{ijmt}=x_{jmt}'\beta+\alpha p_{jmt}+\xi_{jmt}+\zeta_{igmt}+(1-\sigma)\varepsilon_{ijmt}$,
+la inversi\'on de Berry para el Nested Logit entrega
+\[
+\ln\!\left(\frac{s_{jmt}}{s_{0mt}}\right)=x_{jmt}'\beta+\alpha\,p_{jmt}+\sigma\,\ln\!\left(s_{j|g,mt}\right)+\xi_{jmt},
+\]
+donde $s_{j|g,mt}=s_{jmt}/s_{g,mt}$ es la cuota del producto \emph{dentro} de su segmento $g$ y
+$\sigma\in[0,1)$ mide la correlaci\'on de preferencias dentro del nido. El t\'ermino
+$\ln(s_{j|g})$ es endogeneo (depende de $\xi$), por lo que requiere instrumentaci\'on. \\
+\textit{Ver c\'odigo:} construcci\'on de \texttt{l\_sjg} en \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+
+\part Estime por MCO con promociones (sin dummies de producto). Incluya $\ln(s_{j|g})$.
+\begin{solution}
+\input{../bld/tab/q4b_nl_ols.tex}
+
+El coeficiente del precio resulta \emph{positivo} ($\hat\alpha\approx0.110$) y
+$\hat\sigma\approx1.10>1$, fuera del rango admisible $[0,1)$. Ambos s\'intomas anticipan problemas de
+endogeneidad/identificaci\'on (el t\'ermino $\ln(s_{j|g})$ y el precio est\'an correlacionados con
+$\xi$). \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Nested logit''.
+\end{solution}
+
+\part Estime por MC2E con instrumentos a la Hausman y el n\'umero de productos del segmento ($n_{segm}$).
+\begin{solution}
+\input{../bld/tab/q4c_nl_iv.tex}
+
+La estimaci\'on por MC2E (precio instrumentado con \texttt{ivhausman} y $n_{segm}$) deja el precio
+a\'un positivo ($\hat\alpha\approx0.113$) y $\hat\sigma\approx1.10$. La instrumentaci\'on no corrige el
+problema. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}, secci\'on ``Nested logit''.
+\end{solution}
+
+\part Comente los coeficientes de precio y promoci\'on en los 2 modelos.
+\begin{solution}
+\input{../bld/tab/q4d_nl_compare.tex}
+
+En ambos modelos el precio tiene signo \emph{positivo}, lo que delata endogeneidad no corregida. El
+instrumento de Hausman est\'a aqu\'i casi perfectamente correlacionado con el precio (los precios
+mayoristas/finales son bastante uniformes a nivel nacional, con poca variaci\'on local), por lo que
+aporta poca informaci\'on independiente para explicar el precio una vez incluido $\ln(s_{j|g})$.
+Adem\'as $\hat\sigma>1$ viola la consistencia del modelo Nested Logit. Las estimaciones, por tanto, no
+son confiables en esta especificaci\'on. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+
+\part Calcule la matriz de elasticidades para la farmacia 109, semana 39, y compare con el Logit.
+\begin{solution}
+\input{../bld/tab/q4e_nl_elas_matrix.tex}
+
+Con las estimaciones NL-IV ($\hat\alpha>0$, $\hat\sigma>1$) la matriz hereda los problemas de
+identificaci\'on de la parte (d): las elasticidades resultan con signo y escala an\'omalos, por lo que no
+admiten una lectura econ\'omica directa. En principio, el Nested Logit deber\'ia permitir mayor
+sustituci\'on \emph{dentro} de cada segmento (Tylenol, Advil, Bayer, Gen\'erico) que entre segmentos
+---relajando parcialmente la IIA del Logit---, pero ese patr\'on solo se observa si $\hat\sigma\in[0,1)$
+y el precio tiene signo correcto, lo que no ocurre con estos datos/instrumentos. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+\end{parts}
+
+\end{questions}
+
+%==================================================================
+\section*{Parte 2. Estimaci\'on de demanda: BLP (coeficientes aleatorios)}
+%==================================================================
+
+Modelo de coeficientes aleatorios
+$u_{ijmt}=x_{jmt}\beta+\alpha_i p_{jmt}+\beta_{iG}\,\mathit{generic}_{jmt}+\xi_{jmt}+\varepsilon_{ijmt}$,
+con $\alpha_i=\alpha+\alpha_I\,\mathit{inc}_i$ y $\beta_{iG}=\sigma_G\nu_i$, $\nu_i\sim N(0,1)$.
+Se usan 20 consumidores por mercado, con ingreso \texttt{hhincome1--20} y draws $\nu_i$ de
+\texttt{v.csv} (columnas 1--20); instrumentos de demanda: costo mayorista y precios del producto en 30
+farmacias (a la Hausman).
+
+\begin{questions}
+\setcounter{question}{0}
+
+%---------------------------------------------------------- BLP1
+\question \textbf{Estime el modelo de coeficientes aleatorios (BLP).}
+\begin{solution}
+\input{../bld/tab/blp1_coef.tex}
+
+El efecto \emph{medio} del precio en BLP ($\alpha+\alpha_I\bar I\approx-0.45$) es similar al del Logit
+IV comparable, pero el modelo de coeficientes aleatorios a\~nade heterogeneidad sistem\'atica entre
+consumidores: $\alpha_I>0$ indica que los hogares de mayor ingreso son \emph{menos} sensibles al precio,
+y $\sigma_G$ captura dispersi\'on en la valoraci\'on de los gen\'ericos. As\'i, la diferencia con el
+Logit no est\'a en los efectos medios sino en los patrones de sustituci\'on (ver pregunta siguiente). \\
+\textit{Validaci\'on:} objetivo GMM $\approx362.7$ (pauta del profesor: $363.1$); $\hat\alpha$,
+$\hat\alpha_I$ y el efecto medio del precio coinciden estrechamente. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_blp.py}.
+\end{solution}
+
+%---------------------------------------------------------- BLP2
+\question \textbf{Estime las elasticidades con la f\'ormula de BLP} (farmacia 109, semana 39).
+\begin{solution}
+Usando
+$\dfrac{\partial s_j}{\partial p_k}\dfrac{p_k}{s_j}=\dfrac{p_k}{s_j}\dfrac{1}{20}\sum_{ns}(\alpha+\alpha_I\mathit{inc}_{ns})(-s_{ns,j}s_{ns,k}+\mathbf{1}(j=k)s_{ns,j})$:
+
+\input{../bld/tab/blp2_elas_matrix.tex}
+
+A diferencia del Logit, las elasticidades cruzadas \emph{no} son constantes por columna: var\'ian seg\'un
+la cercan\'ia de los productos en precio y en el atributo gen\'erico, reflejando que los consumidores
+sensibles al precio sustituyen m\'as hacia alternativas baratas. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_blp.py} (\texttt{compute\_elasticities}).
+\end{solution}
+
+%---------------------------------------------------------- BLP3
+\question \textbf{Compare las elasticidades de BLP, Logit y Nested Logit.}
+\begin{solution}
+\input{../bld/tab/blp3_compare.tex}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../bld/fig/heatmap_elasticidades.pdf}
+\caption{Matrices de elasticidades (farmacia 109, semana 39): Logit (IV) vs.\ BLP. El BLP muestra
+estructura fuera de la diagonal; el Logit es esencialmente diagonal (IIA).}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{../bld/fig/elas_comparacion.pdf}
+\caption{Elasticidad propia media por producto: Logit (IV con dummies) vs.\ BLP.}
+\end{figure}
+
+Las elasticidades propias de BLP y del Logit IV son de magnitud comparable, pero el aporte del BLP
+est\'a en las \textbf{cruzadas}: permite efectos de sustituci\'on m\'as ricos y realistas, que var\'ian
+entre alternativas seg\'un su similitud (precio, marca, condici\'on de gen\'erico), en vez del patr\'on
+uniforme que impone la IIA del Logit. El Nested Logit, en esta aplicaci\'on, no entrega una comparaci\'on
+\'util por los problemas de identificaci\'on ya discutidos ($\hat\sigma>1$, precio positivo). Una
+limitaci\'on a notar: como el bien externo concentra casi toda la cuota, la sustituci\'on hacia los
+bienes internos es peque\~na; introducir un coeficiente aleatorio adicional sobre los bienes internos
+relajar\'ia este punto. \\
+\textit{Ver c\'odigo:} \texttt{code/hw2\_blp.py} y \texttt{code/hw2\_logit\_nl.py}.
+\end{solution}
+
+\end{questions}
+
+\end{document}
