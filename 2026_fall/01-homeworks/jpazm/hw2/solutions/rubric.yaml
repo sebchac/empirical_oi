@@ -50,6 +50,22 @@ notas_generales:
       numérica (scorer determinístico); no despachar `verificador-explicacion` para ellos, o
       hacerlo solo para confirmar que se registró la convergencia (chequeo trivial, no cuenta como
       cobertura teórica).
+  - id_afectados: [P2a, P2b, P2c, P2d, P2e, P3a, P3b, P3c]
+    nota: >
+      **Instrucción directa del profesor, específica de esta tarea (correo "Soluciones de Tareas",
+      12-jul-2026, jpazm@fen.uchile.cl → TA): "Corrige esta tarea muy suave porque todos deberían
+      tener 7. Las dos primeras preguntas eran solo dar click y la última hacer un loop."** El
+      profesor considera que la Parte 2 (correr los scripts entregados) y la Parte 3 (escribir un
+      loop sobre `merger_engine.py`) son mecánicamente sencillas y no ameritan exigir la misma
+      profundidad de desarrollo teórico en la prosa que originalmente se codificó en
+      `puntos_teoricos`. Aplicado como: se sube en 1 punto (tope 5) todo ítem de P2a-P3c que ya
+      estuviera en 2, 3 o 4 — **excepto** los ítems que queden en 1/5 ("muy incompletos": sección
+      en blanco o casi, sin ningún mecanismo desarrollado — ahí la mayor flexibilidad no aplica, a
+      criterio del TA) y **excepto** cualquier ítem marcado `incorrecto` (conclusión o mecanismo que
+      invierte la relación económica esperada — el TA confirmó explícitamente que "todos deberían
+      tener 7" no incluye perdonar un error conceptual). Este ajuste es **particular de esta
+      tarea/semestre** (parte II, jpazm) — no es una política general de `corregir-tarea` y no debe
+      aplicarse a otras tareas sin una instrucción equivalente del profesor correspondiente.
 
 items:
   # ---------------------------------------------------------------- Parte 1: correr el pipeline (sin interpretación)

@@ -1,0 +1,28 @@
+=== run_demand_airlines.py ===
+  DEMANDA estimada (verdad entre parentesis)
+========================================================
+  Parte 2(b): diversion de pares AA-BB que comparten ruta
+========================================================
+
+=== run_supply_airlines.py ===
+  Estimacion de OFERTA simple (conducta fija) -> omega
+========================================================
+
+=== merger_engine.py (default route R00_T0, kappa=0.5) ===
+Analizando ruta: R00_T0   (kappa=0.5)   vuelos AA/BB: ['AA_R00', 'BB_R00']
+
+flight     dVP_pre  dVP_post       region
+AA_R00     22.1426   17.2899      at-risk
+BB_R00     18.5802   13.5482      at-risk
+
+Chequeo de interaccion (valor del vuelo cuando el hermano ya se fue):
+  AA_R00   valor solo  27.3928  vs cota pre 22.1426  -> se mantiene si queda solo
+  BB_R00   valor solo  21.5044  vs cota pre 18.5802  -> se mantiene si queda solo
+  => retiro simultaneo de todos los at-risk: INCONSISTENTE (worst case = un solo retiro)
+
+Droppable (at-risk) set D = ['AA_R00', 'BB_R00']
+CS pre-merger                   75.5898
+CS post, no withdrawal          71.3492   (repricing  -4.2406)
+CS post, cancel 'AA_R00'        46.0825   (withdrawal -25.2667)
+
+Delta CS interval: [-29.5072, -4.2406]   width 25.2667

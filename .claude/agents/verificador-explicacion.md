@@ -47,6 +47,22 @@ Para cada punto en `puntos_teoricos`:
 Nunca marques "presente" solo porque el texto es largo o suena convincente — necesitas encontrar la
 idea específica, no una impresión general de calidad.
 
+**Excepción explícita — trabajo verificado en código/datos propios pero no narrado en prosa:** si
+`extractor-resultados` reporta que el contenido de un punto teórico está correctamente resuelto en
+un archivo propio del alumno (CSV, notebook, figura) pero no está narrado en el cuerpo del informe,
+márcalo **presente** en vez de `ausente` — el criterio de esta pauta pondera el trabajo conceptual
+hecho, no solo la prosa. Esto **solo aplica si ese cálculo requirió extender el código que entrega
+el profesor** (carpeta `assignment/`): si el resultado sale de ejecutar sin modificaciones un script
+ya entregado, correr ese script no es evidencia de que el alumno entendió el punto — en ese caso NO
+subas la clasificación solo por la existencia del archivo. Esta verificación (diff/md5 contra
+`assignment/`) la hace `extractor-resultados` con `Bash` antes de pasarte la nota — si el hallazgo que
+recibes no aclara si se verificó esa distinción, no asumas que sí: pide la aclaración o léelo tú mismo
+con `Read` contra el archivo de `assignment/` correspondiente antes de marcar "presente".
+
+Esta excepción no aplica a la categoría **incorrecto**: un mecanismo o conclusión que invierte la
+relación causal esperada (p. ej. describir al revés qué rompe o qué causa IIA) sigue siendo
+`incorrecto` sin importar cuánto código o texto lo acompañe — no se "sube" por evidencia adicional.
+
 ### Paso 3 — Maneja los casos degenerados
 
 - **Sin explicación** (`texto_explicación` vacío o "no encontrado"): todos los puntos son
@@ -54,6 +70,15 @@ idea específica, no una impresión general de calidad.
 - **Punto teórico mal definido** (no es verificable, es una opinión sin contenido factual/teórico
   claro): repórtalo como `no-verificable` con una frase explicando por qué, no lo fuerces a
   presente/ausente.
+- **Texto sospechosamente breve para la cantidad de puntos que exige el ítem** (p. ej. 1-2 oraciones
+  para un ítem con 3-4 `puntos_teoricos` sustanciales): esto puede ser un alumno que efectivamente
+  escribió poco, pero también puede ser una señal de que el `texto_explicación` que recibiste está
+  truncado o resumido antes de llegar a ti (ya ocurrió: un resumen intermedio le costó a 9 de 12
+  entregas de una tarea real que se les marcara "ausente" contenido que sí estaba completo en su
+  informe). No lo asumas en ningún sentido — simplemente **marca la brevedad como una observación
+  explícita** en el paso 4 ("el texto recibido es breve para la cantidad de puntos exigidos; si esto
+  no refleja lo que el alumno escribió, verificar contra el informe completo antes de cerrar el
+  puntaje"), para que quien te despachó decida si vale la pena confirmar contra el documento original.
 
 ### Paso 4 — Reporta, no puntúes
 

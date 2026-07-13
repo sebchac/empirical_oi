@@ -1,0 +1,332 @@
+# Rúbrica estructurada de Homework 3 (jpazm, Parte II del curso): demanda inversa de café, recuperación
+# de costos marginales bajo Cournot/Stackelberg, y contrafactuales de conducta.
+# Generada a partir de assignment/hw_1_coffee.pdf (enunciado) y
+# solutions/resolucionesdetareas/{coffee_report.pdf, coffee_solution_note.pdf, coffee_solution.py,
+# demand_estimates.csv, marginal_costs.csv, table_CF{1,2,3,4}.csv} (pauta completa del profesor/RA).
+# Consumida por la skill `corregir-tarea`.
+
+tarea: jpazm_hw1
+parejas_permitidas: true  # "groups of two" — una entrega puede mapear a 2 códigos de alumno
+
+salida:
+  libro: "2026_fall/docencia-web/notas.xlsx"
+  hoja: "ii. tarea_1"
+  columna_id: "ID"
+  estilo_referencia: "hoja 'i. tarea_1' del mismo libro (misma estructura de columnas: ID, <items>, Total %, Nota)"
+
+formula_nota: "Nota = round(1 + (Total_% / 100) * 6, 1)"  # misma convención que el resto del curso
+
+fuente_numeros: >
+  solutions/resolucionesdetareas/coffee_report.pdf (informe de resultados del profesor/RA, fechado
+  12-jul-2026) es la fuente principal de números e interpretación. coffee_solution_note.pdf
+  (fechado 11-jul-2026, un día antes) documenta el detalle metodológico — en particular por qué
+  Contrafactual 1 usa κ=0.5 en vez de una fusión completa. Los CSV (demand_estimates.csv,
+  marginal_costs.csv, table_CF{1,2,3,4}.csv) dan los valores exactos sin redondear. No hay un
+  "report" reproducido aparte como en pbordon/hw2 — el profesor ya entregó la pauta completa.
+
+notas_generales:
+  - id_afectados: [P4a]
+    nota: >
+      **CF1 usa internalización parcial κ=0.5, no una fusión completa (κ=1).** El enunciado
+      impreso (hw_1_coffee.pdf, Contrafactual 1) solo dice "modify the relevant entries of ΩF so
+      that these countries internalize the effect of their quantities on each other's profits" —
+      no especifica el grado. El profesor comunicó κ=0.5 a los alumnos por un canal aparte
+      (verbalmente/WhatsApp, confirmado en su correo "Re: Soluciones de Tareas" del 12-jul-2026:
+      "en la pregunta 4a... les dije que usen finalmente kappa = 0.5"). `coffee_solution_note.pdf`
+      explica por qué: en un bien homogéneo, κ=1 (Ω_ij=1 entre los 3 países del bloque) hace que la
+      matriz 11'+ΩF sea singular — con costos heterogéneos no hay una repartición interior del
+      bloque (el bloque querría producir solo con su miembro más barato), y el solver solo
+      sobrevive vía pseudo-inversa, devolviendo una asignación sin sentido económico. Por lo tanto:
+      **se espera κ=0.5 en todas las entregas** (se les dijo directamente). Si una entrega usó κ=1
+      y obtuvo resultados sin sentido (o no los obtuvo), no es necesariamente un error de concepto
+      si el alumno documentó la degeneración — pero si usó κ=1 sin más y reportó números como si
+      nada, es un error real (no siguió la instrucción dada en clase), a diferencia de las
+      excepciones de abajo que sí son variación legítima entre grupos.
+  - id_afectados: [P4a, P4b, P4c, P4d]
+    nota: >
+      **Regla de "apagado" (shut-down) para cantidades negativas — comunicada aparte, no en el
+      PDF.** El enunciado impreso solo pide "report from the recovered quantities how many are
+      negative, if any" sin decir qué hacer al respecto. El profesor confirmó por correo (12-jul-2026)
+      que le dijo a los alumnos: "que anularan un país y rehicieran todo si encontraban q<0". La
+      pauta implementa esto como una iteración de conjunto activo: si la cantidad de equilibrio de
+      un país sale negativa, se fija q=0, se lo saca del juego, y se re-resuelve el equilibrio
+      reducido; se itera hasta que todos los sobrevivientes tengan q≥0 (a lo más N pasos, resultado
+      único: activos con c<P*, apagados con c≥P*). **Esta es la fuente principal de diferencias
+      legítimas entre grupos** que anticipó el profesor — no todos los grupos encuentran q<0 en las
+      mismas combinaciones país-año-contrafactual, y la forma exacta de iterar puede variar
+      (orden de remoción, etc.) sin cambiar el resultado final si está bien implementada. Evalúa la
+      LÓGICA del criterio (excluir y re-resolver, no solo truncar a 0 sin re-resolver el resto) más
+      que el conteo exacto de apagados, que puede diferir levemente de las cifras de la pauta
+      (baseline 0; CF1 ≈0.9; CF2 ≈4.0; CF3 ≈4.4; CF4 ≈0, promedio anual) según el b y los mc
+      recuperados de cada grupo.
+  - id_afectados: [P3a, P3b, P4a, P4b, P4c, P4d]
+    nota: >
+      **Costo marginal negativo → percentil 25 de los mc no negativos del año.** A diferencia de la
+      regla de apagado, esta SÍ está impresa en el enunciado (Sección 4, primer párrafo) y coincide
+      con lo que el profesor confirmó por correo — no es una fuente esperada de variación entre
+      grupos, es una instrucción explícita. Penaliza si una entrega no la aplicó o inventó un piso
+      distinto sin justificar.
+  - id_afectados: [P2a, P2b]
+    nota: >
+      **Instrumentos débiles en spec 2 (solo temperatura) — advertencia del propio profesor.** El
+      informe de la pauta reporta F parcial de primera etapa = 0.05 para spec 2 (el PIB importador
+      por sí solo explica 90% de la varianza de Q; agregar los instrumentos de temperatura no
+      mejora casi nada el R² de primera etapa). El propio profesor advierte "the spec-2 point
+      estimate is imprecise" y que las especificaciones discrepan mucho entre sí (αQ entre −0.93 y
+      −4.9 según especificación). **No apliques el mínimo estricto entre las 3 especificaciones
+      (OLS/IV1/IV2) si spec 2 se desvía de la pauta** — evalúa OLS e IV1 con tolerancia normal
+      (`pct: 20`), y spec 2 (IV, solo temperatura) solo por signo correcto y orden de magnitud
+      razonable, no por cercanía al punto exacto (−0.927 para αQ lineal, −11.006 para βQ log-log).
+      Los coeficientes de X y Z deben tener signo positivo en las 3 especificaciones — eso sí es
+      exigible con firmeza (está en la teoría, no depende de la fuerza del instrumento).
+  - id_afectados: [P2c]
+    nota: >
+      **Los dos documentos de la pauta se contradicen sobre elástica vs. inelástica — usa el
+      informe final, no la nota metodológica.** `coffee_solution_note.pdf` (11-jul, nota
+      metodológica genérica escrita antes de correr el pipeline final) dice "coffee demand is
+      typically inelastic (|ε|<1)". `coffee_report.pdf` (12-jul, informe final con los números
+      efectivamente calculados) reporta elasticidad media −1.66 (rango −3.79 a −0.81) y concluye
+      "demand is in the mildly elastic region over most of the sample" — lo contrario. Trata el
+      informe final (con el número explícito) como autoritativo. Dado el instrumento débil de spec
+      2, la elasticidad recuperada por cada grupo puede razonablemente caer a cualquier lado de
+      |ε|=1 — no penalices por el lado en que caiga, exige que el alumno calcule su propio número,
+      lo grafique en el tiempo, y discuta coherentemente con SU resultado (no con −1.66 fijo).
+  - id_afectados: [P4a, P4b, P4c, P4d]
+    nota: >
+      **Los niveles de CF (precio, cantidad, excedentes, utilidades) escalan con b=−αQ (spec 2),
+      que está débilmente identificado (ver nota de arriba).** El propio informe del profesor lo
+      dice explícitamente: "those [conclusiones] are driven by market structure... and by ratios of
+      quantities, which are invariant to b; only the profit and surplus levels scale with b". Por
+      eso: usa tolerancia ancha (`pct_relativo`, `pct: 30`) en los niveles absolutos de cada tabla
+      de contrafactual, pero exige coincidencia más estricta en signos, direcciones de cambio, y
+      comparaciones relativas (p. ej. "líderes pierden más que seguidores en %", "el bloque no
+      tiene ganancia neta") — esas son las conclusiones económicas que la pauta señala como
+      robustas al valor de b, y las que debe cubrir la explicación del alumno.
+  - id_afectados: [P3a, P3b]
+    nota: >
+      **El índice de Lerner no es exigible como número puntual — el enunciado solo pide figuras de
+      markup.** Confirmado tras revisar las 12 entregas: el enunciado (Sección 3) solo pide "Report
+      one figure for each leader country comparing recovered marginal costs... Report one figure...
+      comparing recovered markups" — nunca menciona "Lerner index" ni pide tablas de valores
+      puntuales. Consistente con eso, 11 de 12 entregas nunca calculan ni nombran el índice de
+      Lerner (solo markup en niveles, P−mc); la única excepción (Ayelen Sandoval) sí lo reporta
+      como bono. **No penalices la ausencia del índice de Lerner ni de tablas de valores puntuales
+      por país** — evalúa P3a/P3b principalmente por: (a) la fórmula/metodología correcta
+      (Cournot: c=P−bq; Stackelberg: c=P−bqτ), (b) la presencia de las figuras pedidas (Cournot vs.
+      Stackelberg, por líder), y (c) la calidad de la explicación de por qué el markup Stackelberg
+      es mucho menor (mecanismo τ=1/(1+N_F)) — este último punto lo cubrieron muy bien las 12
+      entregas revisadas.
+  - id_afectados: [P3b, P4a, P4b, P4c, P4d]
+    nota: >
+      **La primera pasada de corrección (extractor-resultados + verificador-explicacion) subestimó
+      sistemáticamente la cobertura teórica en 9 de las 12 entregas — no era un "patrón de clase"
+      real, era un problema de extracción.** El TA pidió releer directamente (sin agentes) las 3
+      notas más bajas por temor a contenido no detectado ("no vaya a ser que su entrega estaba en el
+      informe y no fue detectado"); la relectura encontró subcaptura real en Roberto/Cristián (P4a,
+      P4c, P4d) y Axl (P3b, P4c, P4d). Dado ese hallazgo, se releyeron las 12 entregas completas
+      directamente y se encontraron correcciones — casi todas al alza — en 9 de 12: el punto "los
+      seguidores tienen el mismo costo bajo Cournot y Stackelberg" (P3b) terminó estando explícito en
+      9 de 12 entregas (no ausente en "casi toda la clase" como se pensó inicialmente tras la primera
+      pasada), y el mecanismo de "márgenes delgados" de P4c también aparecía en varias entregas con
+      redacción distinta a la esperada. La causa: al armar el prompt del `verificador-explicacion` se
+      pasó un resumen/cita curada por el propio corrector en vez del texto completo de la explicación,
+      y esa curación fue lo suficientemente lossy como para perder contenido real en varios casos, no
+      solo en los de nota baja. **Lección para `corregir-tarea`/`extractor-resultados`:** antes de
+      declarar un "patrón de clase" (omisión compartida por casi toda la clase) como base para
+      excusar o penalizar a todos, verificar que la evidencia de omisión viene de una lectura completa
+      del texto de cada alumno, no de un resumen intermedio — un patrón aparente puede ser artefacto
+      de cómo se resumió la explicación antes de pasarla al verificador, no un hecho real sobre lo que
+      escribieron los alumnos. Único caso de baja real en esta relectura: César Altamirano, P4d
+      (4→2) — su explicación de CF4 solo dice que el valor del liderazgo "es positivo" sin abordar en
+      ningún momento que el efecto agregado de mercado es pequeño, a diferencia del resto de la clase.
+  - id_afectados: [P4a, P4b, P4c, P4d]
+    nota: >
+      **Convención de recuperación de costos ("fitted" vs. "observado") es una elección legítima.**
+      La pauta usa costos recuperados de la curva de demanda ajustada ("fitted"), de forma que el
+      equilibrio Stackelberg base reproduce exactamente las cantidades observadas (0 apagados en el
+      baseline) — esto aísla el efecto de cada contrafactual. Una entrega que use la convención
+      alternativa ("observado": recuperar costos de los datos observados directamente, lo que puede
+      dar apagados ya en el baseline) es igualmente válida si es consistente y está explicada — no
+      la trates como error.
+
+items:
+  - id: P2a
+    pregunta: "Sección 2(a) — demanda inversa lineal por MCO e IV (spec 1: fertilizante+temperatura; spec 2: solo temperatura), interpretación de signos y magnitudes"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 20
+      variables:
+        - {nombre: "OLS_alphaQ", valor_esperado: -4.896}
+        - {nombre: "OLS_alphaX", valor_esperado: 204.57}
+        - {nombre: "OLS_alphaZ", valor_esperado: 0.620}
+        - {nombre: "IV1_alphaQ", valor_esperado: -3.778}
+        - {nombre: "IV1_alphaX", valor_esperado: 156.38}
+        - {nombre: "IV1_alphaZ", valor_esperado: 0.582}
+        - {nombre: "IV2_alphaQ", valor_esperado: -0.927}
+        - {nombre: "IV2_alphaX", valor_esperado: 33.53}
+        - {nombre: "IV2_alphaZ", valor_esperado: 0.487}
+    puntos_teoricos:
+      - "αQ < 0 en las 3 especificaciones: la demanda inversa tiene pendiente negativa"
+      - "αX > 0: mayor PIB de los importadores desplaza la demanda hacia afuera y sube el precio a Q dado"
+      - "αZ > 0: el té es sustituto del café — un alza en su precio desplaza demanda hacia el café"
+      - "OLS está sesgado por simultaneidad (shocks de oferta trazan la curva de demanda y atenúan |αQ|); los instrumentos de costo (fertilizante, temperatura) corrigen eso, aunque spec 2 es débil (ver notas_generales)"
+    peso: 0.09
+
+  - id: P2b
+    pregunta: "Sección 2(b) — demanda inversa log-lineal por MCO e IV, misma estructura que 2(a) en logaritmos"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 20
+      variables:
+        - {nombre: "OLS_betaQ", valor_esperado: -3.305}
+        - {nombre: "OLS_betaX", valor_esperado: 6.63}
+        - {nombre: "OLS_betaZ", valor_esperado: 1.527}
+        - {nombre: "IV1_betaQ", valor_esperado: -3.756}
+        - {nombre: "IV1_betaX", valor_esperado: 7.54}
+        - {nombre: "IV1_betaZ", valor_esperado: 1.574}
+        - {nombre: "IV2_betaQ", valor_esperado: -11.006}
+        - {nombre: "IV2_betaX", valor_esperado: 22.16}
+        - {nombre: "IV2_betaZ", valor_esperado: 2.326}
+    puntos_teoricos:
+      - "βQ < 0, βX > 0, βZ > 0 — mismos signos que la especificación lineal, ahora en elasticidades constantes"
+      - "1/βQ es la elasticidad-precio implícita de esta especificación (constante en el tiempo, a diferencia de la lineal)"
+    peso: 0.08
+
+  - id: P2c
+    pregunta: "Sección 2(c) — elasticidad-precio de la demanda implícita en el tiempo (gráfico) y discusión de si la demanda es elástica o inelástica"
+    resultado:
+      tipo: cualitativo
+      tolerancia: cualitativo
+      referencia: >
+        Para la forma lineal (spec 2): ε_t = (1/αQ)(P_t/Q_t), media ≈ -1.66, rango ≈ [-3.79, -0.81]
+        (ver notas_generales sobre la discrepancia entre informe final y nota metodológica: no
+        exigir "-1.66" como número fijo, exigir el cálculo y la discusión coherente con el propio
+        resultado del alumno).
+    puntos_teoricos:
+      - "calcula ε_t = (1/αQ)·(Pt/Qt) para la forma lineal (varía en el tiempo) y 1/βQ para la log-lineal (constante)"
+      - "grafica la elasticidad implícita a lo largo de la muestra (no solo reporta un número)"
+      - "discute si la demanda es elástica o inelástica de forma coherente con SU propio número (no exige que caiga en un lado fijo, dado el instrumento débil de spec 2)"
+    peso: 0.08
+
+  - id: P3a
+    pregunta: "Sección 3(a) — recuperación de costo marginal bajo Cournot: c_it = P_t − b·q_it"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 20
+      variables:
+        - {nombre: "Brazil_markup_cournot", valor_esperado: 21.9}
+        - {nombre: "Brazil_Lerner_cournot", valor_esperado: 0.187}
+        - {nombre: "VietNam_markup_cournot", valor_esperado: 13.4}
+        - {nombre: "VietNam_Lerner_cournot", valor_esperado: 0.113}
+        - {nombre: "Colombia_markup_cournot", valor_esperado: 9.6}
+        - {nombre: "Colombia_Lerner_cournot", valor_esperado: 0.082}
+        - {nombre: "Indonesia_markup_cournot", valor_esperado: 5.7}
+        - {nombre: "Indonesia_Lerner_cournot", valor_esperado: 0.048}
+    puntos_teoricos:
+      - "bajo Cournot, cada país fija su propio FOC: c_i = P − b·q_i (markup = b·q_i, proporcional a su propia cantidad)"
+      - "todos los países (líderes y seguidores) se tratan igual bajo este supuesto — no hay asimetría de conducta"
+    peso: 0.125
+
+  - id: P3b
+    pregunta: "Sección 3(b) — recuperación de costo marginal bajo Stackelberg (líderes: Brasil, Vietnam, Colombia, Indonesia) y explicación de la diferencia con Cournot"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 20
+      variables:
+        - {nombre: "Brazil_markup_stackelberg", valor_esperado: 0.55}
+        - {nombre: "Brazil_Lerner_stackelberg", valor_esperado: 0.0047}
+        - {nombre: "VietNam_markup_stackelberg", valor_esperado: 0.35}
+        - {nombre: "VietNam_Lerner_stackelberg", valor_esperado: 0.0029}
+        - {nombre: "Colombia_markup_stackelberg", valor_esperado: 0.23}
+        - {nombre: "Colombia_Lerner_stackelberg", valor_esperado: 0.0020}
+        - {nombre: "Indonesia_markup_stackelberg", valor_esperado: 0.14}
+        - {nombre: "Indonesia_Lerner_stackelberg", valor_esperado: 0.0012}
+    puntos_teoricos:
+      - "los seguidores tienen el mismo costo recuperado bajo Cournot y Stackelberg — solo los 4 líderes difieren"
+      - "el markup de cada líder se escala por el pass-through del fringe, τ=1/(1+N_F); con ~40 seguidores, τ≈0.024"
+      - "por eso el markup/Lerner de los líderes bajo Stackelberg es mucho menor que bajo Cournot (órdenes de magnitud), y su costo recuperado sube a casi el precio"
+      - "mecanismo económico: con un fringe grande, la demanda residual del líder es casi plana, su ventaja de primer movimiento vale poco, y el mismo output observado solo es consistente con un costo cercano al precio"
+    peso: 0.125
+
+  - id: P4a
+    pregunta: "Contrafactual 1 — valor de la cooperación entre seguidores (Perú, Honduras, México forman un bloque con κ=0.5)"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 30
+      variables:
+        - {nombre: "delta_P", valor_esperado: 0.03}
+        - {nombre: "delta_Q", valor_esperado: -0.03}
+        - {nombre: "delta_CS", valor_esperado: -3.0}
+        - {nombre: "delta_lead_profit", valor_esperado: 2.64}
+        - {nombre: "delta_foll_profit", valor_esperado: -8.42}
+        - {nombre: "delta_TS", valor_esperado: -8.7}
+        - {nombre: "bloc_gain_PHM", valor_esperado: -10.07}
+    puntos_teoricos:
+      - "usa κ=0.5 (internalización parcial), no una fusión completa κ=1 (ver notas_generales)"
+      - "el valor de la cooperación es negativo: los 3 miembros pierden en conjunto (∆Π^PHM<0) — un bloque de 3 países es demasiado chico para mover el precio al restringir producción"
+      - "es redistributivo: el precio sube apenas (efecto casi nulo), y los líderes/otros de afuera del bloque se benefician del alza marginal de precio sin restringir su propia producción (free-riding)"
+      - "ningún miembro tiene disposición a pagar positiva por coordinar; reporta el cambio individual de cada país en % de su utilidad base"
+    peso: 0.125
+
+  - id: P4b
+    pregunta: "Contrafactual 2 — mala cosecha entre líderes (+5% en su costo marginal)"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 30
+      variables:
+        - {nombre: "delta_P", valor_esperado: 1.27}
+        - {nombre: "delta_Q", valor_esperado: -1.37}
+        - {nombre: "delta_CS", valor_esperado: -120.7}
+        - {nombre: "delta_lead_profit", valor_esperado: -24.85}
+        - {nombre: "delta_foll_profit", valor_esperado: 164.5}
+        - {nombre: "delta_TS", valor_esperado: 19.0}
+    puntos_teoricos:
+      - "los seguidores se benefician fuertemente del shock adverso a los líderes (clásico resultado de free-riding líder-seguidor)"
+      - "el mecanismo: los líderes cargan el shock de costo, pero el alza de precio que provocan es un bien público que captura el fringe"
+      - "bajo los márgenes casi nulos de Stackelberg (ver P3b), un shock de 5% puede sacar a los líderes casi por completo del mercado — esto es una consecuencia extrema (knife-edge) de esos márgenes, no se daría igual bajo Cournot"
+    peso: 0.125
+
+  - id: P4c
+    pregunta: "Contrafactual 3 — el té se vuelve más competitivo (precio del té cae 5%)"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 30
+      variables:
+        - {nombre: "delta_P", valor_esperado: -0.01}
+        - {nombre: "delta_Q", valor_esperado: -7.16}
+        - {nombre: "delta_CS", valor_esperado: -574.9}
+        - {nombre: "delta_lead_profit_pct", valor_esperado: -12.3}
+        - {nombre: "delta_foll_profit_pct", valor_esperado: -0.6}
+        - {nombre: "delta_TS", valor_esperado: -578.4}
+    puntos_teoricos:
+      - "los líderes pierden más que los seguidores, tanto en términos absolutos como porcentuales"
+      - "el efecto opera casi enteramente por cantidad, no por precio: cae el intercepto de demanda, el precio de equilibrio casi no se mueve porque la contracción de cantidad compensa el desplazamiento de demanda"
+      - "los líderes son más golpeados porque sus márgenes son muy delgados (casi nulos bajo Stackelberg), mientras el fringe concentra la mayoría de la utilidad de la industria y solo pierde a sus miembros marginales"
+    peso: 0.125
+
+  - id: P4d
+    pregunta: "Contrafactual 4 — valor del liderazgo (Indonesia deja de ser líder y pasa a seguidor)"
+    resultado:
+      tipo: numerico
+      tolerancia: pct_relativo
+      pct: 30
+      variables:
+        - {nombre: "delta_P", valor_esperado: 0.03}
+        - {nombre: "delta_Q", valor_esperado: -0.03}
+        - {nombre: "delta_CS", valor_esperado: -2.4}
+        - {nombre: "delta_TS", valor_esperado: 2.0}
+        - {nombre: "delta_profit_indonesia", valor_esperado: -0.87}
+        - {nombre: "delta_profit_otros_lideres", valor_esperado: 3.42}
+        - {nombre: "delta_profit_seguidores_originales", valor_esperado: 1.88}
+    puntos_teoricos:
+      - "el valor estratégico del liderazgo es positivo pero pequeño: Indonesia pierde utilidad al dejar de ser líder (∆Π_Indonesia<0 en la definición seguidor−líder)"
+      - "la magnitud es chica precisamente porque el liderazgo vale poco en este modelo (τ≈0.024, ver P3b)"
+      - "los otros líderes (Brasil, Vietnam, Colombia) ganan más que el propio fringe al quedar con un competidor líder menos"
+    peso: 0.125

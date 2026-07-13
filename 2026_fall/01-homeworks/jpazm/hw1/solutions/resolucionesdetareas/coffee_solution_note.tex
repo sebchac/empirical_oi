@@ -1,0 +1,245 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumerate}
+\usepackage[table]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+\pagestyle{fancy}\fancyhf{}
+\lhead{\small Empirical IO -- HW3 Solution}\rhead{\small Coffee: demand, conduct, counterfactuals}
+\cfoot{\thepage}
+\setlength{\headheight}{14pt}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\Om}{\Omega}
+\newcommand{\OmF}{\Om^{F}}
+
+\title{\vspace{-1.5em}Homework 3 --- Solution Notes\\
+\large Coffee Demand, Conduct, and Counterfactuals}
+\author{Empirical Industrial Organization, Spring 2026}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent This note documents the reference solution and, in particular, the
+one modification relative to the assignment sheet: in Counterfactual~1 the
+Peru--Honduras--Mexico bloc coordinates through \emph{partial internalization}
+$\kappa=0.5$ rather than a full merger. All objects are produced by
+\texttt{coffee\_solution.py}; run \texttt{python coffee\_solution.py --data
+coffee.csv --out out/}. Tables and figures are written to \texttt{out/}.
+
+%=====================================================================
+\section{Setup and notation}
+Throughout the supply side we use \textbf{spec~2} of the linear inverse demand
+(temperature-only instruments, eq.~1):
+\[
+P_t = \alpha_0 + \alpha_Q Q_t + \alpha_X X_t + \alpha_Z Z_t + u_t
+\;\;\Longleftrightarrow\;\;
+P(Q_t;X_t,Z_t)=a_t - bQ_t,\quad a_t\equiv\alpha_0+\alpha_X X_t+\alpha_Z Z_t,\;\; b\equiv-\alpha_Q>0 .
+\]
+$L=\{\text{Brazil, Vietnam, Colombia, Indonesia}\}$ are leaders, the remaining
+active exporters are followers $F$. $P_Q=-b$. Operating profit of country $i$ is
+$\pi_i=(P-c_i)q_i$. Because there is no outside good, inside shares $q_i/Q$ sum
+to one and consumer surplus is the area of the demand triangle,
+\[
+CS(Q)=\int_0^{Q}(a_t-bq)\,dq - P\,Q=\tfrac{1}{2}\,b\,Q^2,
+\qquad TS=CS+\textstyle\sum_i\pi_i .
+\]
+
+%=====================================================================
+\section*{The modification to 4(a): partial internalization $\kappa=0.5$}
+\addcontentsline{toc}{section}{The modification to 4(a)}
+The bloc members are \emph{followers}, and coffee is a \emph{homogeneous} good.
+Both facts matter. The follower first-order condition (Appendix eq.~7) with a
+follower ownership matrix $\OmF$ is
+\begin{equation}
+a_t-bQ-c_f-b\sum_{k\in F}\OmF_{fk}q_k=0 .
+\label{eq:foc-follower}
+\end{equation}
+The assignment's ``merger'' sets $\OmF_{ij}=1$ for the three bloc members. In a
+homogeneous good this is degenerate: every cross inverse-demand derivative equals
+$P_Q=-b$, so internalizing a bloc partner is \emph{identical} to internalizing
+oneself. Differencing \eqref{eq:foc-follower} for two bloc members $i,j$ gives
+\[
+b\big[(1+\OmF_{ii})q_i-\OmF_{ij}q_j\big]-b\big[(1+\OmF_{jj})q_j-\OmF_{ji}q_i\big]
+= c_j-c_i
+\;\Longrightarrow\;
+b(1-\kappa)(q_i-q_j) \;\text{(within-bloc)}\; = -(c_i-c_j).
+\]
+At $\kappa=1$ the left-hand side collapses to $0=-(c_i-c_j)$: with heterogeneous
+recovered costs there is \emph{no interior split}---the bloc wants to run only its
+cheapest member---and the matrix $\1\1'+\OmF$ is singular, so the equilibrium is
+not defined (numerically the solver only survives via a pseudo-inverse, which
+returns an economically meaningless minimum-norm allocation). With
+$\kappa=0.5$ the within-bloc output split is finite and determinate,
+\[
+q_i-q_j=-\frac{c_i-c_j}{b(1-\kappa)},
+\]
+so all three members stay interior and the object $\Delta\Pi^{PHM}_t$ is the value
+of \emph{partial} coordination (the maximum the bloc would jointly pay to reach
+$50\%$ internalization), not the value of fusing into a single firm. This is both
+what was requested and the better-posed object. Concretely, $\OmF$ is the identity
+except for the $3\times3$ bloc, whose off-diagonal entries are set to $\kappa=0.5$.
+
+\medskip\noindent\textit{Caveat used in grading.} The joint gain
+$\Delta\Pi^{PHM}_t>0$ need not make cooperation individually rational for every
+member: the highest-cost bloc member is asked to cut output the most and can see
+its \emph{own} profit fall, so the coordination is sustained only with internal
+transfers. Report each member's individual $\Delta\Pi$ and flag this.
+
+%=====================================================================
+\section{Demand (Section 2)}
+\textbf{Signs.} Expect $\alpha_Q<0$ (inverse demand slopes down), $\alpha_X>0$
+(higher importer GDP shifts demand out, raising price at given $Q$), and
+$\alpha_Z>0$ (tea is a substitute: a higher tea price pushes buyers toward
+coffee). \textbf{OLS vs.\ IV.} $Q_t$ is simultaneously determined, so OLS is
+biased: supply shocks trace out the demand curve and attenuate $|\hat\alpha_Q|$
+(often pushing it toward zero). The cost-shifter instruments (fertilizer,
+temperature) move quantity through supply only, restoring a steeper, more
+negative $\hat\alpha_Q$. Spec~1 (fert $+$ temp) is more efficient if fertilizer is
+valid; spec~2 (temp only) is the more defensible exclusion restriction and is used
+downstream.
+
+\textbf{Elasticities.} For the linear form
+$\varepsilon_t=\dfrac{\partial Q}{\partial P}\dfrac{P_t}{Q_t}=\dfrac{1}{\alpha_Q}\dfrac{P_t}{Q_t}$
+(time-varying); for the log form $\varepsilon=1/\beta_Q$ (constant). Coffee demand
+is typically \emph{inelastic} ($|\varepsilon|<1$) over most of the sample, which is
+what makes the market-power story economically interesting. Report
+\texttt{demand\_estimates.csv} and \texttt{elasticities.png}.
+
+%=====================================================================
+\section{Marginal cost and markups (Section 3)}
+Given $b$ and $a_t$, evaluate the conduct FOCs at observed $(P_t,q_{it})$.
+
+\textbf{(a) Cournot.} Every country's FOC is $P+P_Q q_i=c_i$, hence
+\begin{equation}
+c_{it}^{\text{Cournot}}=P_t-b\,q_{it},\qquad
+\text{markup}=P_t-c_{it}=b\,q_{it}.
+\end{equation}
+
+\textbf{(b) Stackelberg.} Followers face Cournot competition among themselves given
+the leaders' output, so their FOC---and therefore their recovered cost---is
+\emph{identical} to Cournot: $c_f=P_t-b\,q_{ft}$. Leaders anticipate follower
+accommodation. With $N_{F}$ symmetric-slope followers and $\OmF=I$, the total
+pass-through of leader output into $Q$ is
+\[
+\tau=1-\1'(\1\1'+\OmF)^{-1}\1=\frac{1}{1+N_{F}} ,
+\]
+and the leader FOC (Appendix eq.~8) $P-c_\ell+P_Q q_\ell\tau=0$ gives
+\begin{equation}
+c_{\ell t}^{\text{Stackelberg}}=P_t-b\,q_{\ell t}\,\tau,\qquad
+\text{markup}=b\,q_{\ell t}\,\tau .
+\end{equation}
+\textbf{Interpretation (the required discussion).} Only the four leaders differ
+across the two conduct assumptions; all followers coincide. Because $\tau<1$,
+the Stackelberg model attributes a \emph{smaller} markup and hence a
+\emph{higher} marginal cost to each leader than Cournot does: with a large
+accommodating fringe ($\tau\approx1/(1+N_F)$ is small), a leader's residual demand
+is nearly flat, its first-mover power is weak, and the same observed output is
+rationalized only by a cost close to price. The per-leader panels
+\texttt{mc\_markup\_\{Brazil,Vietnam,Colombia,Indonesia\}.png} show this gap.
+
+%=====================================================================
+\section{Counterfactuals (Section 4)}
+\textbf{Equilibrium solver.} With linear demand the two stages are linear. Given
+leaders' aggregate $Q_L$, followers solve
+$b(\1\1'+\OmF)q_F=(a_t-bQ_L)\1-c_F$, i.e.\ $q_F(Q_L)=A-B\,Q_L$ with
+$A=\tfrac1b M^{-1}(a_t\1-c_F)$, $B=M^{-1}\1$, $M=\1\1'+\OmF$, and
+$\tau=1-\1'B$. Leaders then solve
+$b\tau(\1\1'+I)q_L=(a_t-b\,\1'A)\1-c_L$. Aggregate $Q=Q_L+\1'q_F$,
+$P=a_t-bQ$, profits, $CS=\tfrac12 bQ^2$, and $TS$ follow. Marginal costs are the
+Stackelberg-recovered $c^{\text{Stackelberg}}$ with the negative-cost floor
+(replace $c<0$ by the 25th percentile of that year's non-negative costs).
+
+\medskip\noindent\textbf{Non-negativity (shut-down) rule.} If the linear solution
+returns a negative quantity for some country, that country does not produce: set
+$q_i=0$, remove it from the game, and re-solve the reduced equilibrium. Iterate
+until every active country has $q\ge0$. Since removing a producer raises the price
+and weakly raises every survivor's output, the iteration drops the most-negative
+country each round and terminates in at most $N$ steps at the unique cost-consistent
+active set (every active country has $c_i<P^\ast$, every shut-down country has
+$c_i\ge P^\ast$, so none would re-enter). A shut-down country earns zero operating
+profit. The count of shut-down countries is reported per counterfactual.
+
+\medskip\noindent\textbf{Consequence for comparative statics.} Because entry/exit
+is now a discrete margin, some counterfactual responses can be non-monotone: a
+shock that raises the price can pull a previously-shut country back in, and its
+entry partially offsets the price move. Read the signs below as the interior
+mechanism; where the shut-down margin binds, take the reported table as
+authoritative.
+
+\begin{description}
+\item[CF1 --- Value of (partial) cooperation, $\kappa=0.5$.]
+Set the bloc block of $\OmF$ to $0.5$. The bloc restricts output, $P$ rises, and
+$\Delta\Pi^{PHM}_t=\big(\pi^{Peru}+\pi^{Hond}+\pi^{Mex}\big)_{\kappa=0.5}-(\cdot)_{\text{base}}>0$
+measures the joint value of coordination. Report each member's $\Delta\Pi$ in
+absolute and as \% of base profit; ``who would pay more'' is the member with the
+largest percentage gain. Expect the answer to be redistributive: the member asked
+to cut most may lose individually (see the caveat above).
+
+\item[CF2 --- Bad crop among leaders ($+5\%$ leader MC).]
+Leaders contract; through $\tau$ this raises $P$. \textbf{Followers benefit}: they
+face the same higher price with unchanged costs and expand along their reaction
+functions---the classic leader--follower free-riding result. Leader profits fall;
+follower profits rise; $CS$ and $TS$ fall. The mechanism is that leaders bear the
+cost shock while the price increase they induce is a public good the fringe
+captures.
+
+\item[CF3 --- Tea more competitive ($Z\to0.95Z$).]
+Only the demand intercept moves: $\Delta a_t=\alpha_Z(0.95-1)Z_t<0$, shifting
+demand in. Both $P$ and $Q$ fall, so every producer loses; decompose each
+country's loss into the price and quantity channels. Leaders lose more in absolute
+terms (they are larger); the percentage ranking is data-dependent---report it from
+\texttt{table\_CF3.csv} rather than asserting it.
+
+\item[CF4 --- Value of leadership.]
+Move Indonesia from $L$ to $F$ and re-solve.
+$\Delta\Pi^{Indonesia}_t=\pi^{Indonesia,\,follower}-\pi^{Indonesia,\,leader}<0$
+is the strategic value of moving first (the first-mover/Stackelberg rent Indonesia
+forgoes). Effects on the remaining leaders and the fringe are ambiguous---removing
+a leader raises the survivors' residual market power but adds Indonesia's output to
+the accommodating fringe---so report signs from \texttt{table\_CF4.csv}.
+\end{description}
+
+\noindent\textbf{Deliverable tables/figures.} \texttt{table\_CF\{1,2,3,4\}.csv}
+(average $P$, total $Q$, $CS$, leader/follower profit, $TS$, count of shut-down
+countries) and \texttt{profit\_changes.png} (country-level \% profit change across
+all four counterfactuals).
+
+%=====================================================================
+\appendix
+\section{Symbol-to-code map}
+\begin{center}\small
+\begin{tabular}{ll}
+\toprule
+Object & Code \\
+\midrule
+$a_t=\alpha_0+\alpha_X X_t+\alpha_Z Z_t$ & \texttt{a\_t} in \texttt{recover\_costs}/\texttt{run\_counterfactuals}\\
+$b=-\alpha_Q$ (spec 2) & \texttt{b}; from \texttt{demand["lin\_IV2"]}\\
+$\tau=1/(1+N_F)$ & returned by \texttt{follower\_block(...)}\\
+$c^{\text{Cournot}},c^{\text{Stackelberg}}$ & \texttt{mc\_cournot}, \texttt{mc\_stack} in \texttt{marginal\_costs.csv}\\
+Negative-cost floor & \texttt{floor\_costs()}\\
+$\OmF$ with bloc $=\kappa$ & \texttt{build\_OmegaF(followers, BLOC, KAPPA)}\\
+Forward equilibrium (shut-down on) & \texttt{solve\_stackelberg(a,b,mc,leaders,followers,bloc,kappa)}\\
+Single linear solve (shut-down off) & \texttt{\_solve\_linear(...)} / \texttt{nonneg=False}\\
+Shut-down set & \texttt{eq["shutdown"]}; count in \texttt{table\_CF*.csv}\\
+$CS=\tfrac12bQ^2$, $TS$ & inside \texttt{solve\_stackelberg}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Implementation note.} The shut-down rule is implemented as the
+active-set iteration described above (drop the most-negative country, re-solve,
+repeat). Removal order is by most-negative quantity; the resulting set is the
+unique one with all active $c_i<P^\ast$ and all shut-down $c_i\ge P^\ast$, so the
+solution does not depend on the order in which ties are broken. The only borderline
+case is a country whose equilibrium quantity is essentially zero; treating it as in
+(producing $\approx0$) or out gives the same price and welfare to numerical
+tolerance.
+
+\end{document}

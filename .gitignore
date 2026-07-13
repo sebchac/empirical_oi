@@ -33,6 +33,10 @@ __pycache__/
 *.7z
 *.log
 
+# Correos del profesor (pesados, 1-2MB c/u): la cita relevante ya queda documentada
+# en notas_generales de cada rubric.yaml, no hace falta versionar el .eml completo.
+*.eml
+
 # Trabajo de corrección del TA (scratch/backup de extracción y verificación,
 # puede contener citas textuales de entregas) — vive junto a submissions/.
 2026_fall/01-homeworks/*/hw*/_grading/

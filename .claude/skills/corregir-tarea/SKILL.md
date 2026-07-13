@@ -58,7 +58,9 @@ corregir-tarea (esta skill, hilo principal — orquesta y es donde el TA puede i
        b. Aplica el scorer determinístico (script)     → nota base 0-5 por tolerancia
        c. Despacha el agente `verificador-explicacion` → cobertura de puntos_teoricos, SIN el valor numérico
   5. Combina (b)+(c) por ítem, con la filosofía de arriba.
-  6. Escribe submissions/<id>/feedback_<id>.md + hwN_grades.xlsx + resumen de casos límite al TA.
+  6. Calibración: releé tú mismo (sin agentes) 2-3 entregas completas cruzando la distribución de
+     notas, antes de cerrar nada — si encuentras una discrepancia real, releé todas.
+  7. Escribe submissions/<id>/feedback_<id>.md + hwN_grades.xlsx + resumen de casos límite al TA.
 ```
 
 Los dos agentes son de **solo lectura** y **no se comunican entre sí** — el verificador de explicación
@@ -70,6 +72,22 @@ de la explicación, y viceversa). Ver `.claude/agents/extractor-resultados.md` y
 
 1. **Cargar `rubric.yaml`.** Si `hwN/solution/rubric.yaml` no existe, avisa al TA y ofrece correr
    `pauta-tarea` primero — no inventes valores esperados ni tolerancias.
+   - **Busca comunicaciones del profesor sobre severidad de corrección** en la carpeta
+     `solution(es)/` (correos `.eml`, notas, README) antes de asumir que el peso teórico de
+     `rubric.yaml` es la última palabra. Si el profesor comunicó explícitamente un criterio distinto
+     (p. ej. "corrige muy suave", "todos deberían tener nota X") es **autoritativo por sobre tu
+     propia lectura de la pauta** — documéntalo en `rubric.yaml` (`notas_generales`) con la fuente
+     (quién, cuándo), la cita textual, y el **alcance explícito** (qué cubre y qué no: p. ej. "muy
+     suave" no equivale automáticamente a perdonar una conclusión económica invertida — confírmalo
+     con el TA en vez de asumirlo). Es específico de esa tarea/profesor: nunca generalices la
+     instrucción a esta skill ni a otras tareas sin una instrucción equivalente del profesor
+     correspondiente.
+   - Si el profesor afirma haber dado "más código/material del habitual" o un scaffolding distinto
+     al que ya tienes en `assignment/`, **verifica con diff/hash (`md5`) archivo por archivo** antes
+     de aceptar la afirmación y cambiar tu juicio sobre qué es trabajo del alumno — puede tratarse
+     del mismo material reenviado, no de scaffolding nuevo (pasó en jpazm/hw2: los archivos que
+     parecían nuevos coincidían byte a byte con `assignment/`, y el PDF de soluciones tenía el mismo
+     MD5 que el ya usado para construir la pauta).
 2. **Roster:** mapea cada carpeta/zip de `submissions/` a `Cod Alumno` y `Nombre` usando
    `2026_fall/grades.xlsx` (hoja con R.U.N / Cod Alumno / Nombre). Los nombres de archivo de entrega
    suelen traer apellido y a veces el código; para casos ambiguos, pregunta al TA en vez de adivinar.
@@ -78,7 +96,10 @@ de la explicación, y viceversa). Ver `.claude/agents/extractor-resultados.md` y
      entrega que mapea a **dos** códigos de alumno — usa nombre completo (no solo apellido) para
      desambiguar entre alumnos con apellidos comunes. Propón la tabla completa
      carpeta → Cod Alumno(s) al TA **antes** de seguir; no la des por buena sin confirmar. Cada
-     integrante recibe exactamente los mismos puntajes en la planilla final.
+     integrante recibe exactamente los mismos puntajes en la planilla final, y el `feedback.md` de
+     esa entrega debe identificar a **todos** los integrantes (Cod Alumno + Nombre completos) en el
+     encabezado, no solo a uno — cualquiera de los dos puede escribir preguntando por su nota y debe
+     reconocerse en el documento.
 3. **Por entrega:**
    - Descomprime el `.zip` si aplica. Ignora `__MACOSX/` y `.DS_Store` — no son contenido del alumno.
    - Despacha `extractor-resultados` (herramienta `Agent`) pasándole la carpeta de la entrega + la
@@ -89,17 +110,76 @@ de la explicación, y viceversa). Ver `.claude/agents/extractor-resultados.md` y
    - Despacha `verificador-explicacion` pasándole, por ítem, **solo** `puntos_teoricos` (de
      `rubric.yaml`) + `texto_explicación` (del extractor) — nunca la nota base ni el valor esperado.
      Recibe de vuelta cobertura presente/ausente/incorrecto por punto, con evidencia.
+     **Pasa el `texto_explicación` completo que devolvió el extractor, no un resumen o cita curada
+     por ti** — condensar la explicación antes de pasarla es exactamente lo que causó una subcaptura
+     sistemática de cobertura en 9 de 12 entregas de jpazm/hw1 (un supuesto "patrón de clase" que
+     resultó ser, en la mayoría de los casos, contenido real que el resumen intermedio no transmitió).
+     Si el texto del extractor es largo, es preferible eso a perder contenido real.
    - Puedes despachar varias entregas en paralelo (una llamada `Agent` por entrega por rol) para no
      serializar toda la corrección; un lote de 4-6 entregas a la vez es razonable para no saturar.
 4. **Combinar y puntuar** cada ítem 0–5: parte de la nota base del scorer, ajusta según cobertura de
    explicación con la filosofía de arriba, y anota una **justificación breve** citando la evidencia que
    entregó `verificador-explicacion`.
-5. **Feedback por alumno:** escribe `submissions/<id>/feedback_<id>.md` con, por ítem: valor extraído
+   - **Criterio de flexibilidad (sin tocar la fórmula del punto 7):** no infles la nota subiendo un
+     puntaje solo porque falta poco — eso es regalar puntaje. Sube la clasificación de un punto
+     teórico puntual (de `ausente`/parcial a `presente`) únicamente con evidencia concreta:
+     (a) el punto está verificablemente resuelto en código/datos propios del alumno (no en el script
+     `assignment/` sin modificar) aunque no esté narrado en el informe — ver la excepción homónima en
+     `verificador-explicacion.md`; o (b) es el **único** punto que falta en el ítem y, comparando entre
+     entregas de la misma tarea, casi toda la clase omitió exactamente ese mismo punto — señal de que
+     el enunciado dejaba espacio a interpretación, no de una debilidad individual. Ninguna de las dos
+     excepciones aplica a un punto marcado `incorrecto` (mecanismo o conclusión que invierte la
+     relación/causalidad esperada): ese puntaje se mantiene bajo sin importar cuánto se haya
+     desarrollado alrededor — es exactamente el tipo de error que el TA quiere seguir penalizando con
+     dureza.
+   - **"Patrón de clase" (b): consulta al TA antes de decidir, y verifica contra texto completo, no
+     contra resúmenes.** Nunca decidas unilateralmente si un patrón transversal se excusa o se
+     penaliza — antes de puntuar, preséntale al TA la lista concreta de qué explicaciones se están
+     omitiendo, ítem por ítem y con evidencia, y que el TA juzgue caso a caso si la omisión es
+     *sustancial* (se penaliza igual para todos, incluso siendo transversal) o *ambigüedad menor del
+     enunciado* (se puede excusar con un bono) — "todos lo omiten, no es culpa individual" aplicado
+     en automático, sin distinguir severidad, hace que la pauta pierda su valor. Incluso si el TA
+     aprueba excusar un patrón, un mismo alumno no debe beneficiarse de más de **un bono de patrón de
+     clase por tarea** — 3-4 bonos simultáneos en el mismo alumno ya no describen una ambigüedad
+     puntual del enunciado, describen que ese alumno no profundiza en el mecanismo de forma
+     consistente. **Antes de declarar que un patrón es real, confirma que la evidencia de omisión
+     viene de leer el texto completo de cada alumno, no de un resumen/cita ya curado por quien
+     corrige** — en jpazm/hw1 un supuesto "patrón de clase" en dos ítems resultó ser, en 9 de 12
+     entregas, un problema de que el resumen pasado a `verificador-explicacion` no capturaba pasajes
+     que sí estaban completos en el informe (ver `notas_generales` de
+     `jpazm/hw1/solutions/rubric.yaml`). Si dudas de si un patrón es real o un artefacto de resumen,
+     relee tú mismo el texto completo de 2-3 entregas antes de presentárselo al TA.
+   - **Ajustes generales (una "curva", no una reclasificación puntual con evidencia):** solo se
+     aplican cuando hay una instrucción explícita y documentada que los respalde (del TA o del
+     profesor — ver "Busca comunicaciones del profesor" en el paso 1), nunca por iniciativa propia
+     de un agente. Incluso con esa instrucción, el ajuste **nunca** sube: (a) ítems "muy
+     incompletos" (sección en blanco o casi, sin ningún desarrollo — un piso general no es lo mismo
+     que compensar ausencia total), ni (b) ítems marcados `incorrecto`. Antes de escribir cualquier
+     archivo, **simula el ajuste sobre toda la tarea y muéstrale al TA la tabla completa
+     nota-anterior-vs-nueva** (no solo describas la regla en palabras) — calibrar una curva a
+     ciegas lleva a sobre- o sub-corregir; enseñar los números concretos es lo que le permite al TA
+     afinar el criterio con precisión.
+5. **Calibración obligatoria antes de cerrar notas — releer directamente una muestra, sin agentes.**
+   Antes de escribir cualquier `feedback.md` o planilla, elige **2-3 entregas** (con `Read`, tú mismo,
+   el documento completo — no un sub-agente ni el resumen del extractor) y confirma que la cobertura
+   de puntos teóricos que reportó `verificador-explicacion` coincide con lo que el informe realmente
+   dice. **La muestra debe cruzar la distribución de notas** (al menos una baja, una media, una alta)
+   — no alcanza con revisar solo las notas bajas: en jpazm/hw1 la subcaptura apareció también en una
+   nota media-alta (6.0/7.0), no solo en las más bajas. Si la muestra no encuentra discrepancias,
+   sigue con confianza. **Si encuentra aunque sea una discrepancia real** (contenido que el pipeline
+   marcó ausente pero que el documento completo sí contiene), no la trates como un caso aislado:
+   releé directamente **las entregas restantes** antes de cerrar cualquier nota — eso fue exactamente
+   lo que ocurrió en jpazm/hw1 (3 de las primeras 3 entregas releídas tenían el problema, lo que llevó
+   a releer las 12 completas y terminó corrigiendo 9 al alza). El costo de este paso es releer unos
+   pocos informes de más; el costo de saltárselo es cerrar notas oficiales sobre datos no confiables.
+   Documenta en el resumen al TA (paso 9) qué entregas se releyeron directamente y si hubo o no
+   discrepancias.
+6. **Feedback por alumno:** escribe `submissions/<id>/feedback_<id>.md` con, por ítem: valor extraído
    vs. esperado (dentro/fuera de tolerancia), cobertura de puntos teóricos (qué faltó, con cita), y
    puntaje con justificación.
-6. **Notas:** `Total_% = Σ (score_item/5 · peso_item) · 100` (los `peso_item` de `rubric.yaml` suman 1
+7. **Notas:** `Total_% = Σ (score_item/5 · peso_item) · 100` (los `peso_item` de `rubric.yaml` suman 1
    por tarea); `Nota = round(1 + Total_%/100 · 6, 1)` (escala chilena 1.0–7.0).
-7. **Planilla.** Por defecto, un archivo nuevo `2026_fall/hwN_grades.xlsx`, hoja `hoja_notas` (de
+8. **Planilla.** Por defecto, un archivo nuevo `2026_fall/hwN_grades.xlsx`, hoja `hoja_notas` (de
    `rubric.yaml`), columnas `Cod Alumno, Nombre, <ids de items en el orden de rubric.yaml>, Total %,
    Nota` — genera las columnas de ítems leyendo `rubric.yaml`, nunca las asumas fijas (una tarea con
    subpartes tipo hw2 y una con ítems planos tipo hw1 usan el mismo generador).
@@ -110,8 +190,9 @@ de la explicación, y viceversa). Ver `.claude/agents/extractor-resultados.md` y
      — no asumas el formato estándar de arriba. Si el libro/hoja de destino no existe todavía,
      créalos con esa misma estructura inferida. Nunca sobrescribas una hoja que ya tenga datos sin
      confirmar con el TA.
-8. **Entrega al TA:** la planilla + un resumen de casos límite (entregas incompletas, sin código,
-   resultados muy desviados, ítems donde `verificador-explicacion` marcó "incorrecto") para que el TA
+9. **Entrega al TA:** la planilla + un resumen de casos límite (entregas incompletas, sin código,
+   resultados muy desviados, ítems donde `verificador-explicacion` marcó "incorrecto") + qué entregas
+   se releyeron directamente en el paso 5 de calibración y si hubo discrepancias, para que el TA
    confirme antes de cerrar notas.
 
 ## Scorer determinístico (aritmética, no criterio de un LLM)
@@ -167,37 +248,57 @@ con signo/conclusión cualitativa correcta como requisito para no capar en 1-2).
 
 ## Snippet para escribir la planilla (openpyxl)
 
+**Importante:** `Total %` y `Nota` se escriben como **fórmulas de Excel** (no como el número ya
+calculado en Python), para que el profesor pueda auditar el cálculo abriendo la celda. El valor en
+Python solo sirve para detectar casos límite antes de cerrar notas (paso "no finalices notas
+silenciosamente"); nunca se vuelca como constante en `Total %`/`Nota`.
+
 ```python
 import openpyxl, yaml
+from openpyxl.utils import get_column_letter
 
 rubric = yaml.safe_load(open(ruta_rubric))  # p. ej. "hwN/solution/rubric.yaml" o "hwN/solutions/rubric.yaml"
 items = [it["id"] for it in rubric["items"]]
-pesos = {it["id"]: it["peso"] for it in rubric["items"]}
+pesos = [it["peso"] for it in rubric["items"]]
 salida = rubric.get("salida")  # None => modo estándar (archivo nuevo hwN_grades.xlsx)
 
-def fila(est):
-    sc = [est["scores"].get(i, 0) for i in items]
-    total_pct = round(sum((est["scores"].get(i, 0) / 5) * pesos[i] for i in items) * 100, 1)
-    nota = round(1 + total_pct / 100 * 6, 1)
-    return sc, total_pct, nota
+def fila_scores(est):
+    return [est["scores"].get(i, 0) for i in items]
+
+def formulas(item_col_start, row):
+    # item_col_start: columna (1-indexada) de la primera columna de ítem (C en modo estándar, B en consolidado)
+    total_terms = [
+        f"{get_column_letter(item_col_start + k)}{row}/5*{peso}"
+        for k, peso in enumerate(pesos)
+    ]
+    total_col = get_column_letter(item_col_start + len(items))
+    total_formula = f"=ROUND(({'+'.join(total_terms)})*100,1)"
+    nota_formula = f"=ROUND(1+{total_col}{row}/100*6,1)"
+    return total_formula, nota_formula
 
 if salida is None:
     # Modo estándar: archivo nuevo, una fila por alumno con Cod Alumno + Nombre.
     wb = openpyxl.Workbook(); ws = wb.active; ws.title = rubric["hoja_notas"]
     ws.append(["Cod Alumno", "Nombre", *items, "Total %", "Nota"])
-    for est in calificaciones:          # est = {"cod":..., "nombre":..., "scores":{item_id:0-5}}
-        sc, total_pct, nota = fila(est)
-        ws.append([est["cod"], est["nombre"], *sc, total_pct, nota])
+    item_col_start = 3  # A=Cod Alumno, B=Nombre, C.. = items
+    for r, est in enumerate(calificaciones, start=2):  # est = {"cod":..., "nombre":..., "scores":{item_id:0-5}}
+        ws.append([est["cod"], est["nombre"], *fila_scores(est), None, None])
+        total_f, nota_f = formulas(item_col_start, r)
+        ws.cell(row=r, column=item_col_start + len(items)).value = total_f
+        ws.cell(row=r, column=item_col_start + len(items) + 1).value = nota_f
     wb.save(f"2026_fall/{rubric['tarea']}_grades.xlsx")
 else:
     # Modo consolidado: nueva hoja en un libro existente, replicando el estilo de una hoja hermana
-    # (leída antes de escribir — ver paso 7). columna_id suele ser "ID" (sin Nombre aparte).
+    # (leída antes de escribir — ver paso 8). columna_id suele ser "ID" (sin Nombre aparte).
     wb = openpyxl.load_workbook(salida["libro"])
     ws = wb.create_sheet(salida["hoja"])
     ws.append([salida["columna_id"], *items, "Total %", "Nota"])
-    for est in calificaciones:          # una fila por CADA integrante si hubo parejas (mismos scores)
-        sc, total_pct, nota = fila(est)
-        ws.append([est["cod"], *sc, total_pct, nota])
+    item_col_start = 2  # A=ID, B.. = items
+    for r, est in enumerate(calificaciones, start=2):  # una fila por CADA integrante si hubo parejas (mismos scores)
+        ws.append([est["cod"], *fila_scores(est), None, None])
+        total_f, nota_f = formulas(item_col_start, r)
+        ws.cell(row=r, column=item_col_start + len(items)).value = total_f
+        ws.cell(row=r, column=item_col_start + len(items) + 1).value = nota_f
     wb.save(salida["libro"])
 ```
 
@@ -213,6 +314,11 @@ else:
   roster completo del curso (ni de más ni de menos) antes de escribir la planilla.
 - Software mixto: Stata, Python, R — puede variar entre alumnos y entre preguntas de un mismo alumno;
   `extractor-resultados` está diseñado para eso, no asumas uno solo.
+- **Resguardo "documento equivocado":** ya ocurrió un reclamo justificado de un alumno por puntaje 0
+  en una pregunta que sí había respondido, porque se revisó el documento equivocado de su entrega
+  (p. ej. un borrador en vez de la versión final, cuando había más de un PDF). Antes de puntuar 0 o
+  "no encontrado" en cualquier ítem, confirma que `extractor-resultados` enumeró y revisó **todos**
+  los documentos candidatos de esa entrega, no solo el primero que abrió.
 - Diferencias numéricas atribuibles al software (Stata vs. Python vs. R) caen dentro de la tolerancia
   declarada; no las penalices aparte.
 - Revisa siempre `notas_generales` en `rubric.yaml` — documentan excepciones conocidas (especificaciones
@@ -229,3 +335,5 @@ else:
   (ítems con SE, un solo autor por entrega, salida estándar).
 - `2026_fall/01-homeworks/jpazm/hw2/solutions/rubric.yaml` — segundo caso de uso: `parejas_permitidas`
   y bloque `salida` apuntando a una hoja nueva dentro de un libro de notas consolidado ya existente.
+  También es el ejemplo de referencia de `notas_generales` documentando una instrucción de severidad
+  del profesor recibida por correo a mitad de la corrección (fuente, fecha, cita y alcance explícito).

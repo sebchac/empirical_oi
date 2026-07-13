@@ -1,5 +1,92 @@
 # Bitácora
 
+## 2026-07-13
+
+### 1. Tercera tarea generalizada: jpazm/hw1 ("Tarea 3" — demanda de café, conducta, contrafactuales)
+
+Construcción de `jpazm/hw1/solutions/rubric.yaml` desde cero (9 ítems: P2a-c demanda inversa
+lineal/log-lineal/elasticidad, P3a-b costo marginal Cournot/Stackelberg, P4a-d cuatro
+contrafactuales), siguiendo el patrón ya establecido en `pbordon/hw2` y `jpazm/hw2` — pesos sumando
+1.0, `puntos_teoricos` por ítem, `parejas_permitidas: true`, `salida` apuntando a `notas.xlsx` hoja
+`ii. tarea_1`. El profesor ya había entregado una pauta completa (`coffee_report.pdf`), por lo que no
+hizo falta reproducir un informe LaTeX nuevo (Opción A). `notas_generales` documenta varias
+excepciones legítimas: κ=0.5 comunicado aparte del enunciado impreso, la regla de "apagado" para
+cantidades negativas, instrumento débil en spec 2, contradicción entre los dos documentos de la pauta
+sobre elástica/inelástica, y que el índice de Lerner no es exigible (el enunciado solo pide figuras
+de markup).
+
+### 2. Hallazgo central de la sesión: falla sistemática de subcaptura en el pipeline extractor→verificador
+
+Corridas las 12 entregas (17 alumnos) por el pipeline estándar (`extractor-resultados` →
+`verificador-explicacion`), aparecieron varias notas bajas y un supuesto "patrón de clase" (casi toda
+la clase omitiendo el mismo punto teórico en dos ítems de contrafactuales). Antes de cerrar, y por
+precaución explícita del TA ante posibles reclamos ("no vaya a ser que su entrega estaba en el
+informe y no fue detectado"), se releyeron directamente — con `Read`, el documento completo, sin
+sub-agentes — 3 de las notas más bajas. **2 de esas 3 tenían contenido real, sustancial, que el
+pipeline había marcado como ausente.** Dado ese resultado (no un caso aislado), se escaló a releer
+las **12 entregas completas**: el resultado fue que **9 de 12 se recalificaron al alza**, incluyendo
+una nota media-alta (6.0/7.0) — es decir, el problema no estaba correlacionado con la nota, afectaba
+transversalmente a la mayoría de la clase. El supuesto "patrón de clase" resultó ser, en su mayor
+parte, un artefacto: el punto que se creía omitido por casi todos estaba de hecho explícito en 9 de
+12 informes.
+
+**Causa raíz:** el diseño de la skill ya decía "pásale a `verificador-explicacion` el texto crudo del
+extractor, no lo resumas" — pero en la práctica, al orquestar 12 dispatches en paralelo, se terminó
+construyendo una versión condensada del texto de cada alumno antes de pasarla al verificador, y esa
+condensación perdió pasajes reales. Un caso ilustrativo: un informe decía literalmente *"la condición
+de recuperación para los seguidores colapsa a la misma ecuación que en Cournot"* — la idea central de
+uno de los puntos supuestamente "omitidos por toda la clase" — pero esa frase no sobrevivió al
+resumen que se le pasó al verificador.
+
+**Un caso adicional de baja real** (no atribuible a subcaptura): un alumno cuya explicación de un
+contrafactual solo afirmaba que el valor era "positivo" sin abordar en ningún momento que el efecto
+agregado de mercado es pequeño — la relectura confirmó que el puntaje original estaba, si acaso,
+sobrevalorado, y se corrigió a la baja. Sirve como contraste: no toda relectura termina en una subida.
+
+### 3. Cambios institucionalizados para que esto no se repita en futuras correcciones
+
+- **`.claude/agents/extractor-resultados.md`**: (a) instrucción explícita de no condensar la cita a
+  "la oración más representativa" — transcribir el pasaje completo aunque sea largo; (b) alerta sobre
+  argumentos acumulativos: un mecanismo establecido en una sección puede invocarse por referencia en
+  una sección posterior sin repetirse ("como vimos anteriormente...") — el extractor debe rastrear y
+  transcribir también el pasaje original, no descartar la referencia por no estar repetida palabra por
+  palabra donde nominalmente se responde la pregunta.
+- **`.claude/agents/verificador-explicacion.md`**: nuevo caso degenerado — si el texto recibido es
+  sospechosamente breve para la cantidad de `puntos_teoricos` que exige el ítem, márcalo explícitamente
+  como observación (no lo asumas en ningún sentido), para que quien despache el agente decida si vale
+  verificar contra el documento original.
+- **`.claude/skills/corregir-tarea/SKILL.md`**: (a) instrucción explícita de pasar el
+  `texto_explicación` completo del extractor a `verificador-explicacion`, nunca una versión curada por
+  quien orquesta; (b) **nuevo paso obligatorio de calibración** (paso 5): antes de cerrar cualquier
+  nota, releer directamente (sin agentes) 2-3 entregas completas, **cruzando la distribución de notas**
+  (no solo las más bajas — el hallazgo de esta sesión fue justamente que una nota media-alta también
+  tenía el problema). Si la muestra encuentra una sola discrepancia real, escalar a releer todas las
+  entregas antes de cerrar — no tratarla como aislada; (c) regla de "patrón de clase": nunca decidir
+  unilateralmente si se excusa o se penaliza una omisión compartida por la clase — presentarle al TA
+  la evidencia concreta ítem por ítem, y solo tras confirmar (con texto completo, no resúmenes) que el
+  patrón es real. Tope de 1 bono de patrón de clase por alumno por tarea si el TA aprueba excusarlo.
+
+### 4. Resultado y entregables
+
+Notas finales (`ii. tarea_1`, 17 alumnos): rango 4.5–7.0. Dos casos límite documentados con especial
+cuidado: una pareja que queda en nota máxima exacta (7.0) — confirmada tras **dos** relecturas
+directas independientes (una general, una buscando activamente fallas) y cruce numérico contra 3
+entregas independientes, sin encontrar ningún error; y un alumno con la única corrección a la baja de
+la sesión. Los 12 `feedback.md` (dentro de `submissions/`, no versionados) citan pasaje textual del
+informe por cada ítem penalizado, para que el TA pueda responder cualquier correo con la evidencia
+exacta a mano.
+
+### Pendiente / próximos pasos
+
+- Notas de `jpazm/hw1` quedan **propuestas**, pendientes de que el TA las cierre (misma convención que
+  `jpazm/hw2`).
+- El paso de calibración obligatoria (nuevo paso 5 de la skill) no se aplicó retroactivamente a
+  `jpazm/hw2` ni a `pbordon/hw2` — quedó fuera de alcance de esta sesión. Si el TA quiere la misma
+  garantía sobre esas correcciones ya cerradas, habría que releer una muestra de esas entregas también.
+- Vale la pena, en la próxima tarea que se corrija, confirmar en la práctica que el nuevo paso de
+  calibración efectivamente se ejecuta antes de escribir `feedback.md` (no solo que quedó escrito en
+  la skill) — es fácil que un paso "antes de cerrar notas" se salte bajo presión de terminar rápido.
+
 ## 2026-07-11
 
 ### 1. Nueva arquitectura de corrección: rúbrica como dato + agentes

@@ -24,7 +24,18 @@ que realmente está escrito.
 ## Procedimiento
 
 1. **Reconoce la carpeta.** Lista el contenido (`Glob`/`Bash ls -R`). Ignora `__MACOSX/` y
-   `.DS_Store` — son ruido de macOS, no contenido del alumno.
+   `.DS_Store` — son ruido de macOS, no contenido del alumno. **Ignora también entornos/dependencias
+   empaquetadas por error** (`.venv/`, `venv/`, `node_modules/`, `site-packages/`, instalaciones de
+   TeX como `TinyTeX/` — se han visto entregas de miles de archivos por incluir el entorno completo
+   en el zip): antes de recorrer una carpeta recursivamente, revisa el primer nivel en busca de estos
+   nombres y exclúyelos del recorrido, no los abras ni los cuentes como contenido del alumno.
+   **Enumera TODOS los documentos candidatos** (informe final, borradores, apéndices, notebooks,
+   CSVs/figuras de salida) antes de
+   revisar ítem por ítem — una entrega puede traer más de un PDF (borrador + versión final, o una
+   portada reciclada de otra tarea); si hay más de uno, dilo explícitamente y prioriza el que el
+   propio alumno señale como versión final. Este resguardo existe porque ya ocurrió un reclamo
+   justificado de un alumno por haberse revisado el documento equivocado de su entrega — no lo
+   repitas.
 2. **Detecta el software presente** (puede haber más de uno, o distinto por pregunta):
    - `.do` / `.log` / `.smcl` → Stata
    - `.R` / `.Rmd` / `.html` renderizado → R
@@ -38,9 +49,37 @@ que realmente está escrito.
    - `ubicación`: archivo y línea, celda de notebook, o página/tabla del informe.
    - `texto_explicación`: el texto crudo de la explicación del alumno para ese ítem, palabra por
      palabra o lo más literal posible (no resumas, no interpretes).
+   - **No condenses la cita a "la oración más representativa".** Transcribe el pasaje completo
+     relevante, aunque sea largo o esté repartido en más de un párrafo. Un resumen corto es
+     exactamente el tipo de pérdida de información que causó, en una corrección real de este curso,
+     que se calificara como "ausente" contenido que sí estaba íntegro en el informe (9 de 12 entregas
+     de `jpazm/hw1` tuvieron que recalificarse al alza tras detectar esto — ver `notas_generales` de
+     `2026_fall/01-homeworks/jpazm/hw1/solutions/rubric.yaml`).
+   - **Los informes suelen construir el argumento de forma acumulativa, no repetirlo en cada
+     sección.** Un mecanismo o resultado establecido en una sección anterior (p. ej. al recuperar
+     costos marginales en la Sección 3) puede ser solo invocado por referencia en una sección
+     posterior (p. ej. "como vimos anteriormente...", "dado que ya establecimos que...", "sus
+     márgenes, que ya vimos son casi nulos...") sin repetirse íntegro. Si el texto de un ítem contiene
+     una referencia de este tipo, **busca y transcribe también el pasaje original donde se estableció
+     el punto**, en la sección que corresponda — no lo des por ausente solo porque no está repetido
+     palabra por palabra en la subsección que responde nominalmente esa pregunta. Esto es
+     especialmente relevante en tareas de contrafactuales/simulación, donde un mecanismo (p. ej. "los
+     márgenes de los líderes son casi nulos bajo Stackelberg") se establece una vez y luego se usa
+     para explicar varios ítems distintos.
 5. **Si un ítem no se encuentra** (no lo hizo, quedó incompleto, o no se ubica con confianza),
-   repórtalo como `no encontrado` con una nota de qué buscaste. **Nunca inventes ni interpoles un
-   valor.**
+   repórtalo como `no encontrado` con una nota de qué buscaste **y confirma explícitamente que
+   revisaste todos los documentos candidatos del punto 1**, no solo el primero que abriste. **Nunca
+   inventes ni interpoles un valor.** Si el contenido de un ítem SÍ existe en un archivo de
+   datos/figura propio del alumno pero no está narrado en el informe, no lo reportes como ausente sin
+   más: anótalo explícitamente como "resuelto en `archivo X`, no narrado en el informe" — esa
+   distinción la necesita `verificador-explicacion` para juzgar cobertura con criterio.
+   - **Antes de anotar eso, verifica que el cálculo requirió extender el código que entrega el
+     profesor** (carpeta `assignment/` de la tarea) — si el alumno solo ejecutó sin modificaciones un
+     script ya entregado, eso NO es evidencia de trabajo propio y no corresponde marcarlo como
+     "resuelto". Verifica con `diff`/`md5` (`Bash`) el archivo del alumno contra el de `assignment/`
+     equivalente: si son idénticos o casi (misma lógica, sin el paso adicional que pide el ítem), no
+     apliques la excepción. No asumas que un archivo es "nuevo" o "distinto" del scaffolding sin
+     comparar — un profesor puede reenviar el mismo material con otro nombre.
 
 ## Playbooks por software
 
